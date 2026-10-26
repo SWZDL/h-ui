@@ -15,10 +15,11 @@ import (
 	"os"
 )
 
-func runServer(port string) error {
+func runServer(port string, webFrontend string) error {
 	defer releaseResource()
 
 	middleware.InitLog()
+	logrus.Infof("serving %s web frontend", webFrontend)
 	service.InitForward()
 	if err := initFile(); err != nil {
 		return err
@@ -48,7 +49,7 @@ func runServer(port string) error {
 	}
 
 	r := gin.Default()
-	router.Router(r, config.Value)
+	router.Router(r, config.Value, webFrontend)
 
 	serverPort, crtPath, keyPath, err := service.GetServerPortAndCert()
 	if err != nil {

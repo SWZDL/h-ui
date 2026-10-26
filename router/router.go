@@ -1,13 +1,22 @@
 package router
 
 import (
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"h-ui/frontend"
+	"h-ui/frontend_react"
 	"h-ui/middleware"
-	"strings"
 )
 
-func Router(router *gin.Engine, huiWebContext *string) {
+// WebFrontend names the embedded SPA that is served at the configured
+// context path. Both applications share the same API.
+const (
+	WebFrontendReact = "react"
+	WebFrontendVue   = "vue"
+)
+
+func Router(router *gin.Engine, huiWebContext *string, webFrontend string) {
 	// global context
 	relativePath := "/"
 	if huiWebContext != nil && strings.HasPrefix(*huiWebContext, "/") {
@@ -17,7 +26,11 @@ func Router(router *gin.Engine, huiWebContext *string) {
 	{
 		globalGroup.Use(middleware.FilterHandler(), middleware.LogHandler(), middleware.RateLimiterHandler())
 
-		frontend.InitFrontend(router, relativePath)
+		if strings.EqualFold(webFrontend, WebFrontendVue) {
+			frontend.InitFrontend(router, relativePath)
+		} else {
+			frontend_react.InitFrontend(router, relativePath)
+		}
 
 		authApi := globalGroup.Group("/hui")
 		{

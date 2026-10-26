@@ -31,8 +31,9 @@ Just the panel for Hysteria2
 - Change the Web port, modify the Hysteria2 traffic multiplier
 - Telegram notification
 - View, import, and export system logs and Hysteria2 logs
-- I18n: English, 简体中文
+- I18n: English, 简体中文, Русский
 - Page adaptation, support night mode, custom page themes
+- New React 19 + shadcn/ui frontend (default) with the legacy Vue UI available via `--web vue`
 - More features waiting for you to discover
 
 ## Recommended OS
@@ -190,7 +191,22 @@ https://v2.hysteria.network/docs/getting-started/3rd-party-apps/
 
 Go >= 1.20, Node.js >= 18.12.0
 
-- frontend
+Two frontends ship with the panel and share the same API:
+
+| Directory        | Stack                        | Notes                    |
+| ---------------- | ---------------------------- | ------------------------ |
+| `frontend_react` | React 19 + Vite + shadcn/ui  | Default frontend         |
+| `frontend`       | Vue 3 + Element Plus         | Legacy frontend          |
+
+- Default frontend (`frontend_react`)
+
+   ```bash
+   cd frontend_react
+   npm install
+   npm run dev
+   ```
+
+- Legacy frontend (`frontend`)
 
    ```bash
    cd frontend
@@ -198,17 +214,43 @@ Go >= 1.20, Node.js >= 18.12.0
    npm run dev
    ```
 
-- backend
+- Backend
 
    ```bash
    go run main.go
    ```
 
+Pick the frontend at startup with `--web` (or the `H_UI_WEB_FRONTEND` environment
+variable). React is the default:
+
+```bash
+./h-ui -p 8081 --web react   # default
+./h-ui -p 8081 --web vue     # legacy Vue frontend
+
+H_UI_WEB_FRONTEND=vue ./h-ui -p 8081
+```
+
+Precedence: `--web` > `H_UI_WEB_FRONTEND` > `react`.
+
 ## Build
+
+Both frontends are embedded into the Go binary, so build **both** dist folders
+before compiling (or at least make sure `frontend/dist` and
+`frontend_react/dist` exist):
+
+- frontend_react
+
+   ```bash
+   cd frontend_react
+   npm install
+   npm run build:prod
+   ```
 
 - frontend
 
    ```bash
+   cd frontend
+   pnpm install
    npm run build:prod
    ```
 

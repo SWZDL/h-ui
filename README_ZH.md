@@ -31,8 +31,9 @@
 - 更改 Web 端口、修改 Hysteria2 流量倍数
 - Telegram 通知
 - 查看、导入和导出系统日志和 Hysteria2 日志
-- 多国语言支持: English, 简体中文
+- 多国语言支持: English, 简体中文, Русский
 - 页面适配、支持夜间模式、自定义页面主题
+- 全新 React 19 + shadcn/ui 前端（默认），可通过 `--web vue` 切回旧版 Vue 前端
 - 更多功能等待你发现
 
 ## 建议系统
@@ -189,7 +190,22 @@ https://v2.hysteria.network/zh/docs/getting-started/3rd-party-apps/
 
 Go >= 1.20, Node.js >= 18.12.0
 
-- frontend
+项目内置两套前端，共用同一套 API：
+
+| 目录             | 技术栈                          | 说明                     |
+| ---------------- | ------------------------------- | ------------------------ |
+| `frontend_react` | React 19 + Vite + shadcn/ui     | 默认前端                 |
+| `frontend`       | Vue 3 + Element Plus            | 旧版前端，仍可切换使用   |
+
+- 默认前端（`frontend_react`）
+
+   ```bash
+   cd frontend_react
+   npm install
+   npm run dev
+   ```
+
+- 旧版前端（`frontend`）
 
    ```bash
    cd frontend
@@ -197,17 +213,40 @@ Go >= 1.20, Node.js >= 18.12.0
    npm run dev
    ```
 
-- backend
+- 后端
 
    ```bash
    go run main.go
    ```
 
+启动时通过 `--web`（或环境变量 `H_UI_WEB_FRONTEND`）选择要使用的前端，默认使用 React：
+
+```bash
+./h-ui -p 8081 --web react   # 默认
+./h-ui -p 8081 --web vue     # 使用旧版 Vue 前端
+
+H_UI_WEB_FRONTEND=vue ./h-ui -p 8081
+```
+
+优先级：`--web` > `H_UI_WEB_FRONTEND` > 默认值 `react`。
+
 ## 构建
+
+两套前端都会被编译进二进制文件，构建 Go 程序前需要先构建 **两个** 前端（或至少保证 `frontend/dist` 与 `frontend_react/dist` 均存在）：
+
+- frontend_react
+
+   ```bash
+   cd frontend_react
+   npm install
+   npm run build:prod
+   ```
 
 - frontend
 
    ```bash
+   cd frontend
+   pnpm install
    npm run build:prod
    ```
 
