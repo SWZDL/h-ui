@@ -1,0 +1,42 @@
+# syntax=docker/dockerfile:1
+
+# Multi-platform image used by the GitHub Actions release workflow. The SPA
+# bundles (frontend/dist and frontend_react/dist) must exist in the build
+# context; the workflow builds and downloads them before invoking buildx.
+FROM --platform=$BUILDPLATFORM golang:1.21-alpine AS builder
+
+ARG TARGETOS
+ARG TARGETARCH
+ARG TARGETVARIANT
+
+WORKDIR /src
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} GOARM=${TARGETVARIANT#v} \
+    go build -trimpath -ldflags="-s -w" -o /out/h-ui .
+
+FROM alpine:3.20
+
+LABEL org.opencontainers.image.source="https://github.com/SWZDL/h-ui"
+LABEL org.opencontainers.image.description="H UI - the panel for Hysteria2"
+LABEL org.opencontainers.image.licenses="GPL-3.0"
+
+ENV TZ=Asia/Shanghai \
+    GIN_MODE=release
+
+WORKDIR /h-ui
+
+RUN apk add --no-cache bash tzdata ca-certificates nftables \
+    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
+    && echo $TZ > /etc/timezone
+
+COPY --from=builder /out/h-ui ./h-ui
+RUN chmod +x ./h-ui
+
+EXPOSE 8081
+
+CMD ["./h-ui"]

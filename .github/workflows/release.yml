@@ -1,0 +1,176 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  frontends:
+    name: Build frontends
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend_react/package-lock.json
+
+      - name: Build React frontend
+        working-directory: frontend_react
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Build Vue frontend
+        working-directory: frontend
+        run: |
+          pnpm install --no-frozen-lockfile
+          pnpm exec vite build --mode production
+
+      - name: Upload SPA bundles
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: |
+            frontend/dist
+            frontend_react/dist
+          if-no-files-found: error
+          retention-days: 3
+
+  binaries:
+    name: Build ${{ matrix.name }}
+    needs: frontends
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: h-ui-linux-amd64, goos: linux, goarch: amd64, goarm: "" }
+          - { name: h-ui-linux-arm64, goos: linux, goarch: arm64, goarm: "" }
+          - { name: h-ui-linux-386, goos: linux, goarch: "386", goarm: "" }
+          - { name: h-ui-linux-armv6, goos: linux, goarch: arm, goarm: "6" }
+          - { name: h-ui-linux-armv7, goos: linux, goarch: arm, goarm: "7" }
+          - { name: h-ui-linux-ppc64le, goos: linux, goarch: ppc64le, goarm: "" }
+          - { name: h-ui-linux-s390x, goos: linux, goarch: s390x, goarm: "" }
+          - { name: h-ui-darwin-amd64, goos: darwin, goarch: amd64, goarm: "" }
+          - { name: h-ui-darwin-arm64, goos: darwin, goarch: arm64, goarm: "" }
+          - { name: h-ui-windows-amd64.exe, goos: windows, goarch: amd64, goarm: "" }
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore embedded frontends
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: .
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          GOARM: ${{ matrix.goarm }}
+        run: |
+          mkdir -p release
+          CGO_ENABLED=0 go build -trimpath -ldflags "-s -w" \
+            -o "release/${{ matrix.name }}" .
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: release/*
+          if-no-files-found: error
+          retention-days: 3
+
+  release:
+    name: Publish GitHub Release
+    needs: binaries
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: h-ui-*
+          path: release
+          merge-multiple: true
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+
+  docker:
+    name: Publish GHCR image
+    needs: frontends
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore embedded frontends
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: .
+
+      - name: Resolve image name
+        id: image
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.image.outputs.name }}
+          tags: |
+            type=raw,value=latest
+            type=semver,pattern={{version}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile.ci
+          platforms: linux/amd64,linux/arm64,linux/386,linux/arm/v6,linux/arm/v7,linux/ppc64le,linux/s390x
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

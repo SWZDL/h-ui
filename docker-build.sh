@@ -5,7 +5,7 @@ export PATH
 init_var() {
   ECHO_TYPE="echo -e"
 
-  version=0.0.25
+  version=0.1.0
 
   arch_arr="linux/386,linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/ppc64le,linux/s390x"
 }
@@ -40,7 +40,7 @@ main() {
   echo_content skyBlue "start build h-ui CPU：${arch_arr}"
 
   if [[ ${version} != "latest" ]]; then
-    docker buildx build -t jonssonyan/h-ui:${version} --platform ${arch_arr} --push .
+    docker buildx build -t ghcr.io/swzdl/h-ui:${version} --platform ${arch_arr} --push .
     if [[ "$?" == "0" ]]; then
       echo_content green "h-ui-linux Version：${version} CPU：${arch_arr} build success"
     else
@@ -48,7 +48,7 @@ main() {
     fi
   fi
 
-  docker buildx build -t jonssonyan/h-ui:latest --platform ${arch_arr} --push .
+  docker buildx build -t ghcr.io/swzdl/h-ui:latest --platform ${arch_arr} --push .
   if [[ "$?" == "0" ]]; then
     echo_content green "h-ui Version：latest CPU：${arch_arr} build success"
   else

@@ -1,6 +1,6 @@
 <div align="center">
 
-<a href="https://github.com/jonssonyan/h-ui"><img src="./docs/images/head-cover.png" alt="H UI" width="150" /></a>
+<a href="https://github.com/SWZDL/h-ui"><img src="./docs/images/head-cover.png" alt="H UI" width="150" /></a>
 
 <h1 align="center">H UI</h1>
 
@@ -9,11 +9,11 @@ English / [简体中文](README_ZH.md)
 Just the panel for Hysteria2
 
 <p>
-<a href="https://www.gnu.org/licenses/gpl-3.0.html"><img src="https://img.shields.io/github/license/jonssonyan/h-ui" alt="License: GPL-3.0"></a>
-<a href="https://github.com/jonssonyan/h-ui/stargazers"><img src="https://img.shields.io/github/stars/jonssonyan/h-ui" alt="GitHub stars"></a>
-<a href="https://github.com/jonssonyan/h-ui/forks"><img src="https://img.shields.io/github/forks/jonssonyan/h-ui" alt="GitHub forks"></a>
-<a href="https://github.com/jonssonyan/h-ui/releases"><img src="https://img.shields.io/github/v/release/jonssonyan/h-ui" alt="GitHub release"></a>
-<a href="https://hub.docker.com/r/jonssonyan/h-ui"><img src="https://img.shields.io/docker/pulls/jonssonyan/h-ui" alt="Docker pulls"></a>
+<a href="https://www.gnu.org/licenses/gpl-3.0.html"><img src="https://img.shields.io/github/license/SWZDL/h-ui" alt="License: GPL-3.0"></a>
+<a href="https://github.com/SWZDL/h-ui/stargazers"><img src="https://img.shields.io/github/stars/SWZDL/h-ui" alt="GitHub stars"></a>
+<a href="https://github.com/SWZDL/h-ui/forks"><img src="https://img.shields.io/github/forks/SWZDL/h-ui" alt="GitHub forks"></a>
+<a href="https://github.com/SWZDL/h-ui/releases"><img src="https://img.shields.io/github/v/release/SWZDL/h-ui" alt="GitHub release"></a>
+<a href="https://github.com/SWZDL/h-ui/pkgs/container/h-ui"><img src="https://img.shields.io/badge/ghcr.io-h--ui-2496ED" alt="GHCR"></a>
 </p>
 
 ![cover](./docs/images/cover.png)
@@ -51,23 +51,23 @@ Memory: ≥ 256MB
 Install Latest Version
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/jonssonyan/h-ui/main/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/SWZDL/h-ui/main/install.sh)
 ```
 
-Install [Custom Version](https://github.com/jonssonyan/h-ui/releases)
+Install [Custom Version](https://github.com/SWZDL/h-ui/releases)
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/jonssonyan/h-ui/main/install.sh) v0.0.1
+bash <(curl -fsSL https://raw.githubusercontent.com/SWZDL/h-ui/main/install.sh) v0.1.0
 ```
 
 ### systemd
 
-Executable files: https://github.com/jonssonyan/h-ui/releases
+Executable files: https://github.com/SWZDL/h-ui/releases
 
 ```bash
 mkdir -p /usr/local/h-ui/
-curl -fsSL https://github.com/jonssonyan/h-ui/releases/latest/download/h-ui-linux-amd64 -o /usr/local/h-ui/h-ui && chmod +x /usr/local/h-ui/h-ui
-curl -fsSL https://raw.githubusercontent.com/jonssonyan/h-ui/main/h-ui.service -o /etc/systemd/system/h-ui.service
+curl -fsSL https://github.com/SWZDL/h-ui/releases/latest/download/h-ui-linux-amd64 -o /usr/local/h-ui/h-ui && chmod +x /usr/local/h-ui/h-ui
+curl -fsSL https://raw.githubusercontent.com/SWZDL/h-ui/main/h-ui.service -o /etc/systemd/system/h-ui.service
 # Custom web port, default is 8081
 # sed -i "s|^ExecStart=.*|ExecStart=/usr/local/h-ui/h-ui -p 8081|" "/etc/systemd/system/h-ui.service"
 systemctl daemon-reload
@@ -95,7 +95,7 @@ rm -rf /etc/systemd/system/h-ui.service /usr/local/h-ui/
 2. Start a container
 
    ```bash
-   docker pull jonssonyan/h-ui
+   docker pull ghcr.io/swzdl/h-ui
 
    docker run -d --cap-add=NET_ADMIN \
      --name h-ui --restart always \
@@ -104,8 +104,12 @@ rm -rf /etc/systemd/system/h-ui.service /usr/local/h-ui/
      -v /h-ui/data:/h-ui/data \
      -v /h-ui/export:/h-ui/export \
      -v /h-ui/logs:/h-ui/logs \
-     jonssonyan/h-ui
+     ghcr.io/swzdl/h-ui
    ```
+
+   > The image is built and pushed to GHCR by the release workflow. Set the
+   > package visibility to **Public** in GitHub Packages, otherwise anonymous
+   > `docker pull` requests will be rejected.
 
    Custom web port, default is 8081
 
@@ -117,7 +121,7 @@ rm -rf /etc/systemd/system/h-ui.service /usr/local/h-ui/
      -v /h-ui/data:/h-ui/data \
      -v /h-ui/export:/h-ui/export \
      -v /h-ui/logs:/h-ui/logs \
-     jonssonyan/h-ui \
+     ghcr.io/swzdl/h-ui \
      ./h-ui -p 8081
    ```
 
@@ -132,14 +136,14 @@ rm -rf /etc/systemd/system/h-ui.service /usr/local/h-ui/
      -v /h-ui/data:/h-ui/data \
      -v /h-ui/export:/h-ui/export \
      -v /h-ui/logs:/h-ui/logs \
-     jonssonyan/h-ui
+     ghcr.io/swzdl/h-ui
    ```
 
 Uninstall
 
 ```bash
 docker rm -f h-ui
-docker rmi jonssonyan/h-ui
+docker rmi ghcr.io/swzdl/h-ui
 rm -rf /h-ui
 ```
 
@@ -270,13 +274,13 @@ You can subscribe to my channel on YouTube: https://www.youtube.com/@jonssonyan
 
 Thanks to everyone who contributed to this project.
 
-<a href="https://github.com/jonssonyan/h-ui/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=jonssonyan/h-ui" />
+<a href="https://github.com/SWZDL/h-ui/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=SWZDL/h-ui" />
 </a>
 
 ## Star History
 
-[![Star History Chart](https://star-history.dera.page/svg?repos=jonssonyan/h-ui&type=Date)](https://star-history.dera.page/#jonssonyan/h-ui&Date)
+[![Star History Chart](https://star-history.dera.page/svg?repos=SWZDL/h-ui&type=Date)](https://star-history.dera.page/#SWZDL/h-ui&Date)
 
 ## License
 

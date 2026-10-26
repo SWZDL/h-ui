@@ -1,6 +1,6 @@
 <div align="center">
 
-<a href="https://github.com/jonssonyan/h-ui"><img src="./docs/images/head-cover.png" alt="H UI" width="150" /></a>
+<a href="https://github.com/SWZDL/h-ui"><img src="./docs/images/head-cover.png" alt="H UI" width="150" /></a>
 
 <h1 align="center">H UI</h1>
 
@@ -9,11 +9,11 @@
 仅仅是 Hysteria2 的面板
 
 <p>
-<a href="https://www.gnu.org/licenses/gpl-3.0.html"><img src="https://img.shields.io/github/license/jonssonyan/h-ui" alt="License: GPL-3.0"></a>
-<a href="https://github.com/jonssonyan/h-ui/stargazers"><img src="https://img.shields.io/github/stars/jonssonyan/h-ui" alt="GitHub stars"></a>
-<a href="https://github.com/jonssonyan/h-ui/forks"><img src="https://img.shields.io/github/forks/jonssonyan/h-ui" alt="GitHub forks"></a>
-<a href="https://github.com/jonssonyan/h-ui/releases"><img src="https://img.shields.io/github/v/release/jonssonyan/h-ui" alt="GitHub release"></a>
-<a href="https://hub.docker.com/r/jonssonyan/h-ui"><img src="https://img.shields.io/docker/pulls/jonssonyan/h-ui" alt="Docker pulls"></a>
+<a href="https://www.gnu.org/licenses/gpl-3.0.html"><img src="https://img.shields.io/github/license/SWZDL/h-ui" alt="License: GPL-3.0"></a>
+<a href="https://github.com/SWZDL/h-ui/stargazers"><img src="https://img.shields.io/github/stars/SWZDL/h-ui" alt="GitHub stars"></a>
+<a href="https://github.com/SWZDL/h-ui/forks"><img src="https://img.shields.io/github/forks/SWZDL/h-ui" alt="GitHub forks"></a>
+<a href="https://github.com/SWZDL/h-ui/releases"><img src="https://img.shields.io/github/v/release/SWZDL/h-ui" alt="GitHub release"></a>
+<a href="https://github.com/SWZDL/h-ui/pkgs/container/h-ui"><img src="https://img.shields.io/badge/ghcr.io-h--ui-2496ED" alt="GHCR"></a>
 </p>
 
 ![cover](./docs/images/cover.png)
@@ -51,23 +51,23 @@ CPU: x86_64/amd64 arm64/aarch64
 安装最新版
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/jonssonyan/h-ui/main/install.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/SWZDL/h-ui/main/install.sh)
 ```
 
-安装[自定义版本](https://github.com/jonssonyan/h-ui/releases)
+安装[自定义版本](https://github.com/SWZDL/h-ui/releases)
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/jonssonyan/h-ui/main/install.sh) v0.0.1
+bash <(curl -fsSL https://raw.githubusercontent.com/SWZDL/h-ui/main/install.sh) v0.1.0
 ```
 
 ### systemd
 
-下载可执行文件: https://github.com/jonssonyan/h-ui/releases
+下载可执行文件: https://github.com/SWZDL/h-ui/releases
 
 ```bash
 mkdir -p /usr/local/h-ui/
-curl -fsSL https://github.com/jonssonyan/h-ui/releases/latest/download/h-ui-linux-amd64 -o /usr/local/h-ui/h-ui && chmod +x /usr/local/h-ui/h-ui
-curl -fsSL https://raw.githubusercontent.com/jonssonyan/h-ui/main/h-ui.service -o /etc/systemd/system/h-ui.service
+curl -fsSL https://github.com/SWZDL/h-ui/releases/latest/download/h-ui-linux-amd64 -o /usr/local/h-ui/h-ui && chmod +x /usr/local/h-ui/h-ui
+curl -fsSL https://raw.githubusercontent.com/SWZDL/h-ui/main/h-ui.service -o /etc/systemd/system/h-ui.service
 # 自定义 Web 端口，默认 8081
 # sed -i "s|^ExecStart=.*|ExecStart=/usr/local/h-ui/h-ui -p 8081|" "/etc/systemd/system/h-ui.service"
 systemctl daemon-reload
@@ -95,7 +95,7 @@ rm -rf /etc/systemd/system/h-ui.service /usr/local/h-ui/
 2. 启动容器
 
    ```bash
-   docker pull jonssonyan/h-ui
+   docker pull ghcr.io/swzdl/h-ui
 
    docker run -d --cap-add=NET_ADMIN \
      --name h-ui --restart always \
@@ -104,8 +104,11 @@ rm -rf /etc/systemd/system/h-ui.service /usr/local/h-ui/
      -v /h-ui/data:/h-ui/data \
      -v /h-ui/export:/h-ui/export \
      -v /h-ui/logs:/h-ui/logs \
-     jonssonyan/h-ui
+     ghcr.io/swzdl/h-ui
    ```
+
+   > 镜像由发布流程构建并推送到 GHCR。请在 GitHub Packages 中把该包可见性设为
+   > **Public**，否则匿名 `docker pull` 会失败。
 
    自定义 Web 端口，默认 8081
 
@@ -117,7 +120,7 @@ rm -rf /etc/systemd/system/h-ui.service /usr/local/h-ui/
      -v /h-ui/data:/h-ui/data \
      -v /h-ui/export:/h-ui/export \
      -v /h-ui/logs:/h-ui/logs \
-     jonssonyan/h-ui \
+     ghcr.io/swzdl/h-ui \
      ./h-ui -p 8081
    ```
 
@@ -132,14 +135,14 @@ rm -rf /etc/systemd/system/h-ui.service /usr/local/h-ui/
      -v /h-ui/data:/h-ui/data \
      -v /h-ui/export:/h-ui/export \
      -v /h-ui/logs:/h-ui/logs \
-     jonssonyan/h-ui
+     ghcr.io/swzdl/h-ui
    ```
 
 卸载
 
 ```bash
 docker rm -f h-ui
-docker rmi jonssonyan/h-ui
+docker rmi ghcr.io/swzdl/h-ui
 rm -rf /h-ui
 ```
 
@@ -266,13 +269,13 @@ Telegram Channel: https://t.me/jonssonyan_channel
 
 在这里感谢所有为此项目做出贡献的人
 
-<a href="https://github.com/jonssonyan/h-ui/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=jonssonyan/h-ui" />
+<a href="https://github.com/SWZDL/h-ui/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=SWZDL/h-ui" />
 </a>
 
 ## Star History
 
-[![Star History Chart](https://star-history.dera.page/svg?repos=jonssonyan/h-ui&type=Date)](https://star-history.dera.page/#jonssonyan/h-ui&Date)
+[![Star History Chart](https://star-history.dera.page/svg?repos=SWZDL/h-ui&type=Date)](https://star-history.dera.page/#SWZDL/h-ui&Date)
 
 ## 开源协议
 
