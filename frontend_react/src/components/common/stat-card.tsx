@@ -43,15 +43,15 @@ export function StatCard({
         </CardDescription>
         {badge && <CardAction>{badge}</CardAction>}
       </CardHeader>
-      <CardContent className="flex flex-col gap-2">
-        <div className="text-xl font-semibold tracking-tight tabular-nums">
+      <CardContent className="flex flex-col gap-2.5">
+        <div className="text-3xl font-medium tracking-tight tabular-nums">
           {value}
         </div>
         {typeof progress === "number" && (
           <Progress value={Math.min(Math.max(progress, 0), 100)} />
         )}
         {hint && (
-          <div className="text-xs text-muted-foreground tabular-nums">{hint}</div>
+          <div className="text-[13px] text-muted-foreground tabular-nums">{hint}</div>
         )}
       </CardContent>
     </Card>

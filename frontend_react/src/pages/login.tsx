@@ -100,10 +100,10 @@ export function LoginPage() {
     <TooltipProvider delayDuration={150}>
       <div className="grid min-h-svh lg:grid-cols-[1.08fr_1fr]">
         {/* Brand panel — intentionally dark in both themes. */}
-        <aside className="relative hidden flex-col justify-between overflow-hidden bg-[oklch(0.165_0.022_268)] p-10 text-white lg:flex xl:p-14">
+        <aside className="relative hidden flex-col justify-between overflow-hidden bg-[oklch(0.175_0.008_92)] p-10 text-white lg:flex xl:p-14">
           <div className="bg-grid-light pointer-events-none absolute inset-0 opacity-70" />
-          <div className="pointer-events-none absolute -top-32 -right-24 size-[420px] rounded-full bg-primary/30 blur-[130px]" />
-          <div className="pointer-events-none absolute bottom-[-180px] left-[-120px] size-[380px] rounded-full bg-[oklch(0.7_0.16_190)]/20 blur-[130px]" />
+          <div className="pointer-events-none absolute -top-32 -right-24 size-[420px] rounded-full bg-white/8 blur-[130px]" />
+          <div className="pointer-events-none absolute bottom-[-180px] left-[-120px] size-[380px] rounded-full bg-[oklch(0.7_0.13_268)]/16 blur-[130px]" />
 
           <div className="relative">
             <Logo className="text-white [&_span]:text-white/90" />
@@ -111,10 +111,10 @@ export function LoginPage() {
 
           <div className="relative flex max-w-lg flex-col gap-8">
             <div className="flex flex-col gap-4">
-              <h2 className="text-3xl font-semibold tracking-tight text-white text-balance xl:text-4xl">
+              <h2 className="font-serif text-4xl font-normal leading-[1.15] tracking-tight text-white text-balance xl:text-5xl">
                 {t("login.brandTitle")}
               </h2>
-              <p className="text-sm leading-relaxed text-white/60">
+              <p className="text-[15px] leading-relaxed text-white/60">
                 {t("login.brandSubtitle")}
               </p>
             </div>
@@ -165,7 +165,7 @@ export function LoginPage() {
                 <p className="text-xs font-medium tracking-[0.16em] text-muted-foreground uppercase">
                   {t("app.tagline")}
                 </p>
-                <h1 className="text-2xl font-semibold tracking-tight">
+                <h1 className="font-serif text-3xl font-normal tracking-tight">
                   {t("login.title")}
                 </h1>
               </div>

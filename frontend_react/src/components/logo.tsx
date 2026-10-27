@@ -10,12 +10,11 @@ export function LogoMark({ className }: { className?: string }) {
     >
       <defs>
         <linearGradient id="hui-logo-bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="oklch(0.64 0.19 272)" />
-          <stop offset="55%" stopColor="oklch(0.52 0.2 268)" />
-          <stop offset="100%" stopColor="oklch(0.42 0.17 262)" />
+          <stop offset="0%" stopColor="oklch(0.29 0.012 92)" />
+          <stop offset="100%" stopColor="oklch(0.2 0.01 92)" />
         </linearGradient>
         <linearGradient id="hui-logo-glow" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="white" stopOpacity="0.95" />
+          <stop offset="0%" stopColor="white" stopOpacity="0.96" />
           <stop offset="100%" stopColor="white" stopOpacity="0.72" />
         </linearGradient>
       </defs>
@@ -26,7 +25,7 @@ export function LogoMark({ className }: { className?: string }) {
         strokeWidth="3.1"
         strokeLinecap="round"
       />
-      <circle cx="27" cy="11.5" r="2.6" fill="oklch(0.86 0.12 90)" />
+      <circle cx="27" cy="11.5" r="2.6" fill="oklch(0.83 0.1 88)" />
     </svg>
   );
 }

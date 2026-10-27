@@ -77,7 +77,7 @@ export function AppShell() {
         </header>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="mx-auto flex w-full max-w-[1440px] min-w-0 flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8">
+          <div className="mx-auto flex w-full max-w-[1760px] min-w-0 flex-1 flex-col gap-8 p-4 md:p-6 lg:p-10">
             <Outlet />
           </div>
         </div>
