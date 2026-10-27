@@ -1,22 +1,23 @@
 import {
-  ChevronDownIcon,
+  AlertTriangleIcon,
   DownloadIcon,
-  PlusIcon,
+  FileCodeIcon,
   RefreshCwIcon,
   RotateCcwIcon,
   SaveIcon,
   UploadIcon,
-  XIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   exportHysteria2ConfigApi,
   getHysteria2ConfigApi,
+  getHysteria2RawConfigApi,
   importHysteria2ConfigApi,
   listConfigApi,
   updateConfigsApi,
   updateHysteria2ConfigApi,
+  updateHysteria2RawConfigApi,
   uploadCertFileApi,
 } from "@/api/config";
 import { hysteria2ChangeVersionApi, listReleaseApi } from "@/api/hysteria2";
@@ -36,14 +37,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Select,
   SelectContent,
   SelectGroup,
@@ -54,18 +47,18 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/i18n";
 import { assignWith, deepCopy } from "@/lib/format";
 import { downloadResponse, validateFile } from "@/lib/io";
 import {
+  applySectionDefaults,
   buildHysteriaPayload,
   defaultHysteria2ServerConfig,
   enabledSectionsFromConfig,
   HYSTERIA_CONFIG_KEYS,
   hysteriaSections,
-  optionalSections,
-  requiredSections,
+  lockedSections,
   type AclType,
   type HysteriaSection,
   type SectionFlags,
@@ -91,7 +84,6 @@ export function HysteriaPage() {
   const [enabled, setEnabled] = useState<SectionFlags>(emptySectionFlags);
   const [tlsType, setTlsType] = useState<TlsType>("acme");
   const [aclType, setAclType] = useState<AclType>("inline");
-  const [active, setActive] = useState<HysteriaSection>("extension");
   const [extension, setExtension] = useState({
     remark: "",
     portHopping: "",
@@ -109,11 +101,20 @@ export function HysteriaPage() {
   const [versionChanging, setVersionChanging] = useState(false);
   const [monitor, setMonitor] = useState<Hysteria2MonitorVo | null>(null);
 
+  // Raw YAML editor state. The document is the file the Hysteria2 process
+  // reads, so it is loaded alongside the form since the card is always visible.
+  const [rawContent, setRawContent] = useState("");
+  const [rawOriginal, setRawOriginal] = useState("");
+  const [rawLoading, setRawLoading] = useState(false);
+  const [rawSaving, setRawSaving] = useState(false);
+
   const [resetOpen, setResetOpen] = useState(false);
 
   const importInputRef = useRef<HTMLInputElement>(null);
   const certInputRef = useRef<HTMLInputElement>(null);
   const keyInputRef = useRef<HTMLInputElement>(null);
+
+  const sectionRefs = useRef<Partial<Record<HysteriaSection, HTMLDivElement>>>({});
 
   const applyConfigValues = useCallback((configs: ConfigVo[]) => {
     const values = new Map(configs.map((item) => [item.key, item.value]));
@@ -133,6 +134,20 @@ export function HysteriaPage() {
     setTlsType(data.tls?.cert && data.tls?.key ? "tls" : "acme");
     setAclType(data.acl?.inline ? "inline" : "file");
     setEnabled(enabledSectionsFromConfig(data));
+  }, []);
+
+  const loadRaw = useCallback(async () => {
+    setRawLoading(true);
+    try {
+      const data = await getHysteria2RawConfigApi();
+      const content = data?.content ?? "";
+      setRawContent(content);
+      setRawOriginal(content);
+    } catch {
+      /* toast handled by the API layer */
+    } finally {
+      setRawLoading(false);
+    }
   }, []);
 
   const load = useCallback(
@@ -159,6 +174,10 @@ export function HysteriaPage() {
       if (serverResult.status === "fulfilled") {
         applyServerConfig(serverResult.value);
       }
+
+      // The raw YAML card is always visible, so its content is part of the
+      // initial render rather than an on-demand fetch.
+      await loadRaw();
       setLoading(false);
 
       // Releases come from GitHub and the monitor shells out to the binary;
@@ -174,7 +193,7 @@ export function HysteriaPage() {
         }
       );
     },
-    [applyConfigValues, applyServerConfig]
+    [applyConfigValues, applyServerConfig, loadRaw]
   );
 
   useEffect(() => {
@@ -189,23 +208,19 @@ export function HysteriaPage() {
     });
   };
 
-  const visibleSections = hysteriaSections.filter(
-    (section) => requiredSections.includes(section) || enabled[section]
-  );
-  const addableSections = optionalSections.filter((section) => !enabled[section]);
-
-  const addSection = (section: HysteriaSection) => {
-    setEnabled((prev) => ({ ...prev, [section]: true }));
-    setActive(section);
-  };
-
-  const removeSection = (section: HysteriaSection) => {
-    if (requiredSections.includes(section)) {
+  const toggleSection = (section: HysteriaSection, next: boolean) => {
+    if (lockedSections.includes(section) && !next) {
       toast.error(t("hysteria.requiredSection"));
       return;
     }
-    setEnabled((prev) => ({ ...prev, [section]: false }));
-    setActive("listen");
+    if (next) {
+      setConfig((prev) => {
+        const draft = deepCopy(prev);
+        applySectionDefaults(draft, section);
+        return draft;
+      });
+    }
+    setEnabled((prev) => ({ ...prev, [section]: next }));
   };
 
   const handleEnableChange = async (next: boolean) => {
@@ -266,9 +281,15 @@ export function HysteriaPage() {
     setErrors(next);
     if (Object.keys(next).length === 0) return true;
 
-    if (next.listen) setActive("listen");
-    else if (next["trafficStats.listen"]) setActive("http");
-    else setActive("tls");
+    const focus: HysteriaSection = next["trafficStats.listen"] ? "http" : "tls";
+    sectionRefs.current[focus]?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+    if (next.listen) sectionRefs.current.listen?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
     toast.error(t("common.operationFailed"));
     return false;
   };
@@ -296,6 +317,7 @@ export function HysteriaPage() {
       );
       toast.success(t("common.success"));
       await load(true);
+      void loadRaw();
     } catch {
       /* handled globally */
     } finally {
@@ -310,7 +332,6 @@ export function HysteriaPage() {
     setAclType("inline");
     setExtension({ remark: "", portHopping: "", clashExtension: "" });
     setErrors({});
-    setActive("extension");
     toast.success(t("common.reset"));
   };
 
@@ -341,6 +362,7 @@ export function HysteriaPage() {
       await importHysteria2ConfigApi(form);
       toast.success(t("common.success"));
       await load(true);
+      void loadRaw();
     } catch {
       /* handled globally */
     }
@@ -375,7 +397,23 @@ export function HysteriaPage() {
     }
   };
 
+  const handleSaveRaw = async () => {
+    setRawSaving(true);
+    try {
+      await updateHysteria2RawConfigApi({ content: rawContent });
+      setRawOriginal(rawContent);
+      toast.success(t("hysteria.rawConfigSaved"));
+      await load(true);
+      setMonitor(await monitorHysteria2Api().catch(() => monitor));
+    } catch {
+      /* handled globally */
+    } finally {
+      setRawSaving(false);
+    }
+  };
+
   const running = Boolean(monitor?.running);
+  const rawDirty = rawContent !== rawOriginal;
 
   return (
     <div className="flex flex-col gap-6">
@@ -427,33 +465,6 @@ export function HysteriaPage() {
             orientation="vertical"
             className="hidden data-[orientation=vertical]:h-6 sm:block"
           />
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={addableSections.length === 0}
-              >
-                <PlusIcon data-icon="inline-start" />
-                {t("hysteria.addConfigItem")}
-                <ChevronDownIcon data-icon="inline-end" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48">
-              <DropdownMenuLabel>{t("hysteria.addSection")}</DropdownMenuLabel>
-              <DropdownMenuGroup>
-                {addableSections.map((section) => (
-                  <DropdownMenuItem
-                    key={section}
-                    onClick={() => addSection(section)}
-                  >
-                    {t(`hysteria.${section}`)}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
 
           <div className="flex items-center gap-2">
             <Select value={version} onValueChange={setVersion}>
@@ -512,96 +523,204 @@ export function HysteriaPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("hysteria.configuration")}</CardTitle>
-          <CardDescription>{t("hysteria.description")}</CardDescription>
-          <CardAction>
-            <Badge variant="outline" className="font-mono text-[10px]">
-              config.yaml
-            </Badge>
-          </CardAction>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
+      {loading ? (
+        <Card>
+          <CardContent>
             <LoadingState />
-          ) : (
-            <Tabs
-              value={active}
-              onValueChange={(value) => setActive(value as HysteriaSection)}
-              className="gap-5"
-            >
-              <div className="-mx-1 overflow-x-auto px-1 pb-1">
-                <TabsList variant="line" className="w-max min-w-full justify-start">
-                  {visibleSections.map((section) => (
-                    <TabsTrigger
-                      key={section}
-                      value={section}
-                      className="flex-none gap-1 px-3"
-                    >
-                      {t(`hysteria.${section}`)}
-                      {!requiredSections.includes(section) && (
-                        <XIcon
-                          aria-hidden
-                          className="size-3 text-muted-foreground/70 transition-colors hover:text-foreground"
-                          onClick={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            removeSection(section);
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="flex flex-col gap-5">
+          {/* Panel-side metadata that never reaches the Hysteria2 YAML. */}
+          <div ref={(node) => void (sectionRefs.current.extension = node ?? undefined)}>
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("hysteria.extension")}</CardTitle>
+                <CardDescription>{t("hysteria.extensionHint")}</CardDescription>
+                <CardAction>
+                  <Badge variant="outline" className="text-[10px] font-normal">
+                    {t("hysteria.panelOnly")}
+                  </Badge>
+                </CardAction>
+              </CardHeader>
+              <CardContent>
+                <SectionContent
+                  section="extension"
+                  config={config}
+                  patch={patch}
+                  tlsType={tlsType}
+                  onTlsTypeChange={setTlsType}
+                  aclType={aclType}
+                  onAclTypeChange={setAclType}
+                  errors={errors}
+                  uploading={uploading}
+                  onUploadCert={(kind) => {
+                    if (kind === "crt") certInputRef.current?.click();
+                    else keyInputRef.current?.click();
+                  }}
+                  extension={extension}
+                  onExtensionChange={(next) =>
+                    setExtension((prev) => ({ ...prev, ...next }))
+                  }
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          {hysteriaSections
+            .filter((section) => section !== "extension")
+            .map((section) => {
+              const locked = lockedSections.includes(section);
+              const active = enabled[section] || locked;
+              return (
+                <div
+                  key={section}
+                  ref={(node) => void (sectionRefs.current[section] = node ?? undefined)}
+                >
+                  <Card className={active ? undefined : "opacity-70"}>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        {t(`hysteria.${section}`)}
+                        {locked && (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] font-normal"
+                          >
+                            {t("hysteria.required")}
+                          </Badge>
+                        )}
+                      </CardTitle>
+                      <CardDescription>
+                        {t(`hysteria.sectionHint.${section}`)}
+                      </CardDescription>
+                      <CardAction>
+                        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>
+                            {active
+                              ? t("hysteria.sectionOn")
+                              : t("hysteria.sectionOff")}
+                          </span>
+                          <Switch
+                            checked={active}
+                            disabled={locked}
+                            onCheckedChange={(checked) =>
+                              toggleSection(section, checked)
+                            }
+                          />
+                        </label>
+                      </CardAction>
+                    </CardHeader>
+                    {active ? (
+                      <CardContent>
+                        <SectionContent
+                          section={section}
+                          config={config}
+                          patch={patch}
+                          tlsType={tlsType}
+                          onTlsTypeChange={setTlsType}
+                          aclType={aclType}
+                          onAclTypeChange={setAclType}
+                          errors={errors}
+                          uploading={uploading}
+                          onUploadCert={(kind) => {
+                            if (kind === "crt") certInputRef.current?.click();
+                            else keyInputRef.current?.click();
                           }}
+                          extension={extension}
+                          onExtensionChange={(next) =>
+                            setExtension((prev) => ({ ...prev, ...next }))
+                          }
                         />
-                      )}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
+                      </CardContent>
+                    ) : (
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">
+                          {t("hysteria.sectionDisabledHint")}
+                        </p>
+                      </CardContent>
+                    )}
+                  </Card>
+                </div>
+              );
+            })}
+
+          {/* The generated YAML, editable in place. */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileCodeIcon className="size-4 text-muted-foreground" />
+                {t("hysteria.rawConfig")}
+              </CardTitle>
+              <CardDescription>{t("hysteria.rawConfigDescription")}</CardDescription>
+              <CardAction className="flex items-center gap-2">
+                <Badge variant="outline" className="font-mono text-[10px]">
+                  bin/hysteria2.yaml
+                </Badge>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => void loadRaw()}
+                  disabled={rawLoading}
+                >
+                  {rawLoading ? (
+                    <Spinner />
+                  ) : (
+                    <RefreshCwIcon data-icon="inline-start" />
+                  )}
+                  {t("common.refresh")}
+                </Button>
+              </CardAction>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              <div className="flex items-start gap-2 rounded-lg border border-dashed px-3 py-2 text-xs text-muted-foreground">
+                <AlertTriangleIcon className="mt-0.5 size-3.5 shrink-0" />
+                <span>{t("hysteria.rawConfigHint")}</span>
               </div>
 
-              {visibleSections.map((section) => (
-                <TabsContent key={section} value={section}>
-                  <div className="flex max-w-4xl flex-col gap-4">
-                    {!requiredSections.includes(section) && (
-                      <div className="flex items-center justify-between gap-3">
-                        <h2 className="text-sm font-medium">
-                          {t(`hysteria.${section}`)}
-                        </h2>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="text-muted-foreground"
-                          onClick={() => removeSection(section)}
-                        >
-                          <XIcon data-icon="inline-start" />
-                          {t("hysteria.removeSection")}
-                        </Button>
-                      </div>
-                    )}
-                    <SectionContent
-                      section={section}
-                      config={config}
-                      patch={patch}
-                      tlsType={tlsType}
-                      onTlsTypeChange={setTlsType}
-                      aclType={aclType}
-                      onAclTypeChange={setAclType}
-                      errors={errors}
-                      uploading={uploading}
-                      onUploadCert={(kind) => {
-                        if (kind === "crt") certInputRef.current?.click();
-                        else keyInputRef.current?.click();
-                      }}
-                      extension={extension}
-                      onExtensionChange={(next) =>
-                        setExtension((prev) => ({ ...prev, ...next }))
-                      }
-                    />
-                  </div>
-                </TabsContent>
-              ))}
-            </Tabs>
-          )}
-        </CardContent>
-      </Card>
+              {rawLoading ? (
+                <div className="flex h-64 items-center justify-center rounded-lg border">
+                  <Spinner />
+                </div>
+              ) : (
+                <Textarea
+                  value={rawContent}
+                  spellCheck={false}
+                  rows={22}
+                  className="min-h-[22rem] resize-y font-mono text-xs leading-relaxed"
+                  placeholder={t("hysteria.rawConfigEmpty")}
+                  onChange={(event) => {
+                    setRawContent(event.target.value);
+                  }}
+                />
+              )}
+
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  onClick={() => void handleSaveRaw()}
+                  disabled={rawSaving || rawLoading || !rawDirty}
+                >
+                  {rawSaving ? <Spinner /> : <SaveIcon data-icon="inline-start" />}
+                  {rawSaving ? t("common.saving") : t("hysteria.rawConfigSave")}
+                </Button>
+                <Button
+                  variant="outline"
+                  disabled={!rawDirty || rawLoading}
+                  onClick={() => setRawContent(rawOriginal)}
+                >
+                  <RotateCcwIcon data-icon="inline-start" />
+                  {t("hysteria.rawConfigRevert")}
+                </Button>
+                {rawDirty && (
+                  <span className="text-xs text-muted-foreground">
+                    {t("hysteria.rawConfigDirty")}
+                  </span>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Hidden inputs: import + certificate uploads */}
       <input

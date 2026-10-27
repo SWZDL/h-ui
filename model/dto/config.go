@@ -16,3 +16,9 @@ type ConfigUpdateDto struct {
 type ConfigsUpdateDto struct {
 	ConfigUpdateDtos []ConfigUpdateDto `json:"configUpdateDtos" form:"configUpdateDtos" validate:"required"`
 }
+
+// Hysteria2RawConfigDto carries the YAML body of the generated Hysteria2
+// configuration file.
+type Hysteria2RawConfigDto struct {
+	Content *string `json:"content" form:"content" validate:"required,min=1,max=262144"`
+}

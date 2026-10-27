@@ -12,6 +12,14 @@ export function getHysteria2ConfigApi() {
   return get<Hysteria2ServerConfig>("/config/getHysteria2Config");
 }
 
+export function getHysteria2RawConfigApi() {
+  return get<{ content: string }>("/config/getHysteria2RawConfig");
+}
+
+export function updateHysteria2RawConfigApi(data: { content: string }) {
+  return post<null>("/config/updateHysteria2RawConfig", data);
+}
+
 export function updateHysteria2ConfigApi(data: Hysteria2ServerConfig) {
   return post<null>("/config/updateHysteria2Config", data);
 }

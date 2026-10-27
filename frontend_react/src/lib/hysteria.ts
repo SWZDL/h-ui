@@ -200,6 +200,61 @@ export type SectionFlags = Record<HysteriaSection, boolean>;
 export type TlsType = "tls" | "acme";
 export type AclType = "file" | "inline";
 
+/**
+ * Fill in the default values for a section the operator just enabled. Without
+ * this an optional block would be switched on while still undefined, and the
+ * generated YAML would silently omit it.
+ */
+export function applySectionDefaults(
+  draft: Hysteria2ServerConfig,
+  section: HysteriaSection
+): void {
+  const source = defaultHysteria2ServerConfig;
+  switch (section) {
+    case "ech":
+      draft.ech = draft.ech ?? deepCopy(source.ech);
+      break;
+    case "obfs":
+      draft.obfs = draft.obfs ?? deepCopy(source.obfs);
+      break;
+    case "quic":
+      draft.quic = draft.quic ?? deepCopy(source.quic);
+      break;
+    case "bandwidth":
+      draft.bandwidth = draft.bandwidth ?? deepCopy(source.bandwidth);
+      draft.congestion = draft.congestion ?? deepCopy(source.congestion);
+      draft.ignoreClientBandwidth = draft.ignoreClientBandwidth ?? false;
+      break;
+    case "speedTest":
+      draft.speedTest = draft.speedTest ?? false;
+      break;
+    case "udp":
+      draft.disableUDP = draft.disableUDP ?? false;
+      draft.udpIdleTimeout = draft.udpIdleTimeout ?? source.udpIdleTimeout;
+      break;
+    case "resolver":
+      draft.resolver = draft.resolver ?? deepCopy(source.resolver);
+      break;
+    case "sniff":
+      draft.sniff = draft.sniff ?? deepCopy(source.sniff);
+      break;
+    case "acl":
+      draft.acl = draft.acl ?? deepCopy(source.acl);
+      break;
+    case "outbounds":
+      draft.outbounds = draft.outbounds ?? [];
+      break;
+    case "masquerade":
+      draft.masquerade = draft.masquerade ?? deepCopy(source.masquerade);
+      break;
+    default:
+      break;
+  }
+}
+
+/** Sections Hysteria2 cannot start without, so they are always enabled. */
+export const lockedSections: HysteriaSection[] = ["listen", "tls", "http"];
+
 export function enabledSectionsFromConfig(
   config: Hysteria2ServerConfig
 ): SectionFlags {
