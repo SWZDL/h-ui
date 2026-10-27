@@ -40,6 +40,7 @@ import {
 import { useAuth } from "@/contexts/auth";
 import { useI18n } from "@/i18n";
 import { navGroups } from "@/lib/navigation";
+import { cn } from "@/lib/utils";
 
 export function AppSidebar() {
   const { pathname } = useLocation();
@@ -94,7 +95,10 @@ export function AppSidebar() {
                           <CollapsibleTrigger asChild>
                             <SidebarMenuButton
                               tooltip={t(entry.labelKey)}
-                              isActive={groupActive}
+                              className={cn(
+                                groupActive &&
+                                  "bg-sidebar-accent text-sidebar-accent-foreground"
+                              )}
                             >
                               <Icon />
                               <span>{t(entry.labelKey)}</span>
