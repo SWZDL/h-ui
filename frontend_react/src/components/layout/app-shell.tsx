@@ -19,13 +19,15 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { useAuth } from "@/contexts/auth";
 import { useI18n } from "@/i18n";
-import { matchNav } from "@/lib/navigation";
+import { matchNav, navGroupsFor } from "@/lib/navigation";
 
 export function AppShell() {
   const { pathname } = useLocation();
   const { t } = useI18n();
-  const match = matchNav(pathname);
+  const { isAdmin } = useAuth();
+  const match = matchNav(pathname, navGroupsFor(isAdmin));
   const pageLabel = match ? t(match.labelKey) : "H UI";
 
   useEffect(() => {

@@ -5,6 +5,17 @@ import (
 	"h-ui/controller"
 )
 
+// initAccountUserRouter exposes the read-only account endpoints available to
+// every signed-in account. Handlers restrict non-admin callers to their own
+// record.
+func initAccountUserRouter(accountApi *gin.RouterGroup) {
+	account := accountApi.Group("/account")
+	{
+		account.GET("/getAccountInfo", controller.GetAccountInfo)
+		account.GET("/getAccount", controller.GetAccount)
+	}
+}
+
 func initAccountAdminRouter(accountApi *gin.RouterGroup) {
 	account := accountApi.Group("/account")
 	{
@@ -13,8 +24,6 @@ func initAccountAdminRouter(accountApi *gin.RouterGroup) {
 		account.POST("/deleteAccount", controller.DeleteAccount)
 		account.POST("/updateAccount", controller.UpdateAccount)
 		account.POST("/resetTraffic", controller.ResetTraffic)
-		account.GET("/getAccountInfo", controller.GetAccountInfo)
-		account.GET("/getAccount", controller.GetAccount)
 		account.POST("/importAccount", controller.ImportAccount)
 		account.POST("/exportAccount", controller.ExportAccount)
 		account.POST("/releaseKickAccount", controller.ReleaseKickAccount)

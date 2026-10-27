@@ -56,5 +56,9 @@ func GetToken(c *gin.Context) string {
 	if tokenStr == "" {
 		return ""
 	}
-	return strings.SplitN(tokenStr, " ", 2)[1]
+	parts := strings.SplitN(tokenStr, " ", 2)
+	if len(parts) != 2 {
+		return ""
+	}
+	return parts[1]
 }

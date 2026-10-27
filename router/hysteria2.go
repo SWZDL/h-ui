@@ -14,13 +14,21 @@ func initHysteria2AuthRouter(hysteria2Api *gin.RouterGroup) {
 	hysteria2Api.GET("/:conPass", controller.Hysteria2Subscribe)
 }
 
+// initHysteria2UserRouter exposes the two read-only URL builders every account
+// needs for its own dashboard. The handlers reject requests for other accounts.
+func initHysteria2UserRouter(hysteria2Api *gin.RouterGroup) {
+	hysteria2 := hysteria2Api.Group("/hysteria2")
+	{
+		hysteria2.GET("/hysteria2SubscribeUrl", controller.Hysteria2SubscribeUrl)
+		hysteria2.GET("/hysteria2Url", controller.Hysteria2Url)
+	}
+}
+
 func initHysteria2Router(hysteria2Api *gin.RouterGroup) {
 	hysteria2 := hysteria2Api.Group("/hysteria2")
 	{
 		hysteria2.POST("/hysteria2Kick", controller.Hysteria2Kick)
 		hysteria2.POST("/hysteria2ChangeVersion", controller.Hysteria2ChangeVersion)
 		hysteria2.GET("/listRelease", controller.ListRelease)
-		hysteria2.GET("/hysteria2SubscribeUrl", controller.Hysteria2SubscribeUrl)
-		hysteria2.GET("/hysteria2Url", controller.Hysteria2Url)
 	}
 }

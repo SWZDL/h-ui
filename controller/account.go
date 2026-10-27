@@ -133,7 +133,7 @@ func DeleteAccount(c *gin.Context) {
 		vo.Fail(err.Error(), c)
 		return
 	}
-	if *account.Role == "admin" {
+	if *account.Role == constant.RoleAdmin {
 		vo.Fail("admin cannot be deleted", c)
 		return
 	}
@@ -162,7 +162,7 @@ func UpdateAccount(c *gin.Context) {
 			vo.Fail(err.Error(), c)
 			return
 		}
-		if *account.Role == "admin" {
+		if *account.Role == constant.RoleAdmin {
 			vo.Fail("the admin account cannot be deleted", c)
 			return
 		}
@@ -227,6 +227,12 @@ func GetAccountInfo(c *gin.Context) {
 func GetAccount(c *gin.Context) {
 	idDto, err := validateField(c, dto.IdDto{})
 	if err != nil {
+		return
+	}
+	// Non-admin accounts may only read their own record; the admin account list
+	// keeps its unrestricted read access.
+	if err = service.CheckAccountAccess(c, *idDto.Id); err != nil {
+		vo.Fail(err.Error(), c)
 		return
 	}
 	account, err := service.GetAccount(*idDto.Id)
