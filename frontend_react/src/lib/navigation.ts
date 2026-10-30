@@ -1,5 +1,4 @@
 import {
-  ActivityIcon,
   FileTextIcon,
   RocketIcon,
   ScrollTextIcon,
@@ -56,7 +55,6 @@ export const navGroups: NavGroup[] = [
     adminOnly: true,
     entries: [
       { to: "/config/list", labelKey: "nav.settings", icon: Settings2Icon },
-      { to: "/monitor/system", labelKey: "nav.monitor", icon: ActivityIcon },
       {
         labelKey: "nav.logs",
         icon: ScrollTextIcon,

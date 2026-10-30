@@ -21,9 +21,6 @@ const TelegramPage = lazy(() =>
 const SystemConfigPage = lazy(() =>
   import("@/pages/system-config").then((m) => ({ default: m.SystemConfigPage }))
 );
-const MonitorPage = lazy(() =>
-  import("@/pages/monitor").then((m) => ({ default: m.MonitorPage }))
-);
 const LogsPage = lazy(() =>
   import("@/pages/logs").then((m) => ({ default: m.LogsPage }))
 );
@@ -72,7 +69,12 @@ export default function App() {
           <Route path="hysteria/list" element={admin(<HysteriaPage />)} />
           <Route path="telegram/list" element={admin(<TelegramPage />)} />
           <Route path="config/list" element={admin(<SystemConfigPage />)} />
-          <Route path="monitor/system" element={admin(<MonitorPage />)} />
+          {/* Monitoring lives on the overview page now; keep old bookmarks working. */}
+          <Route path="monitor" element={<Navigate to="/info/account" replace />} />
+          <Route
+            path="monitor/system"
+            element={<Navigate to="/info/account" replace />}
+          />
           <Route path="log/system" element={admin(<LogsPage kind="system" />)} />
           <Route
             path="log/hysteria"

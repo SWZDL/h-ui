@@ -18,6 +18,7 @@ import { getAccountApi, verifyDefaultPassApi } from "@/api/account";
 import { hysteria2SubscribeUrlApi, hysteria2UrlApi } from "@/api/hysteria2";
 import { QrCodeDialog } from "@/components/common/qr-code-dialog";
 import { StatCard, TinyBadge } from "@/components/common/stat-card";
+import { SystemStatus } from "@/components/dashboard/system-status";
 import { LogoMark } from "@/components/logo";
 import { PageHeader } from "@/components/page-header";
 import {
@@ -62,6 +63,9 @@ export function DashboardPage() {
   const [account, setAccount] = useState<AccountVo | null>(null);
   const [qr, setQr] = useState<QrState>(EMPTY_QR);
   const [defaultPassword, setDefaultPassword] = useState(false);
+  // Bumped by the page-level refresh button so the status panel reloads with
+  // the account card instead of only reacting to its own interval.
+  const [refreshSignal, setRefreshSignal] = useState(0);
 
   const loadAccount = useCallback(async () => {
     if (!user) return;
@@ -98,6 +102,11 @@ export function DashboardPage() {
     const ok = await copyText(text);
     if (ok) toast.success(t("common.copySuccess"));
     else toast.error(t("common.copyFailed"));
+  };
+
+  const refreshAll = () => {
+    void loadAccount();
+    setRefreshSignal((value) => value + 1);
   };
 
   const handleSubscribe = async () => {
@@ -175,7 +184,7 @@ export function DashboardPage() {
         title={t("dashboard.title")}
         description={t("dashboard.description")}
         actions={
-          <Button variant="outline" size="sm" onClick={() => void loadAccount()}>
+          <Button variant="outline" size="sm" onClick={refreshAll}>
             <RefreshCwIcon data-icon="inline-start" />
             {t("common.refresh")}
           </Button>
@@ -393,6 +402,8 @@ export function DashboardPage() {
           }
         />
       </div>
+
+      <SystemStatus refreshSignal={refreshSignal} />
 
       <QrCodeDialog
         open={qr.open}

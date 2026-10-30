@@ -177,13 +177,33 @@ func TestRegularAccountCannotUseAdminEndpoints(t *testing.T) {
 		{http.MethodPost, "/hui/account/deleteAccount", map[string]any{"id": 1}},
 		{http.MethodGet, "/hui/config/getConfig", nil},
 		{http.MethodGet, "/hui/log/logSystem", nil},
-		{http.MethodGet, "/hui/monitor/monitorSystem", nil},
 	}
 	for _, item := range paths {
 		result := call(t, engine, item.method, item.path, userToken, item.body)
 		if result.Code != 50403 {
 			t.Errorf("%s %s: want 50403, got code=%d message=%s", item.method, item.path, result.Code, result.Message)
 		}
+	}
+}
+
+// Monitoring feeds the overview page, which every account can open, so host and
+// service health must be readable without the admin role.
+func TestMonitoringIsVisibleToEveryAccount(t *testing.T) {
+	engine := setup(t)
+	userToken := login(t, engine, "testuser", "userpass")
+
+	result := call(t, engine, http.MethodGet, "/hui/monitor/monitorSystem", userToken, nil)
+	if result.Code != 20000 {
+		t.Fatalf("regular account monitorSystem: code=%d message=%s", result.Code, result.Message)
+	}
+	if !strings.Contains(string(result.Data), `"huiVersion"`) {
+		t.Fatalf("monitorSystem payload missing host data: %s", result.Data)
+	}
+
+	adminToken := login(t, engine, "sysadmin", "sysadmin")
+	admin := call(t, engine, http.MethodGet, "/hui/monitor/monitorSystem", adminToken, nil)
+	if admin.Code != 20000 {
+		t.Fatalf("admin monitorSystem: code=%d message=%s", admin.Code, admin.Message)
 	}
 }
 

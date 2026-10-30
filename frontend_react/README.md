@@ -73,7 +73,7 @@ src/
   contexts/       auth session provider
   i18n/           locale dictionaries and the translation provider
   lib/            axios client, formatting/IO helpers, navigation model, hysteria payload builder
-  pages/          login, dashboard, accounts, hysteria, system config, telegram, monitor, logs, 404
+  pages/          login, dashboard, accounts, hysteria, system config, telegram, logs, 404
   types/          API DTO/VO contracts
 ```
 
@@ -83,6 +83,9 @@ src/
   `Authorization: Bearer …` by the axios interceptor.
 - `50401` responses clear the session and route back to the login screen.
 - Admin-only routes are guarded both in the sidebar and via `<RequireAdmin>`.
+- The overview page carries the system status panel (host usage and Hysteria2
+  health) for every signed-in role, so monitoring has no separate screen or
+  entry point.
 - Forms use the shadcn `Field` primitives with inline errors; server errors are
   surfaced as toasts by the shared API layer.
 - The Hysteria2 editor only sends sections that are enabled and drops the

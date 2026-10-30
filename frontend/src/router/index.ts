@@ -156,7 +156,7 @@ export const asyncRoutes: any[] = [
     component: "Layout",
     redirect: "/monitor",
     name: "Monitor",
-    meta: { title: "monitor", icon: "report", roles: ["admin"] },
+    meta: { title: "monitor", icon: "report" },
     children: [
       {
         path: "system",
@@ -165,7 +165,6 @@ export const asyncRoutes: any[] = [
         meta: {
           title: "monitorSystem",
           icon: "report",
-          roles: ["admin"],
         },
       },
     ],

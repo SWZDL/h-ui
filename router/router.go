@@ -46,6 +46,9 @@ func Router(router *gin.Engine, huiWebContext *string, webFrontend string) {
 		{
 			initAccountUserRouter(huiUserApi)
 			initHysteria2UserRouter(huiUserApi)
+			// Host and service health is shown on the overview page, which every
+			// account can open, so monitoring is not an administrative endpoint.
+			initMonitorRouter(huiUserApi)
 		}
 
 		// Administrative endpoints. Requiring the admin role here keeps the
@@ -56,7 +59,6 @@ func Router(router *gin.Engine, huiWebContext *string, webFrontend string) {
 			initConfigRouter(huiAdminApi)
 			initHysteria2Router(huiAdminApi)
 			initLogRouter(huiAdminApi)
-			initMonitorRouter(huiAdminApi)
 		}
 	}
 }
