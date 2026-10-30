@@ -117,6 +117,7 @@ export default {
     resetTrafficCronTip:
       "Scheduled task expression, reference: https://pkg.go.dev/github.com/robfig/cron/v3",
     resetTrafficMonth: "Run once a month, midnight, first of month",
+    resetTrafficMonth15: "Midnight on the 15th of each month",
     resetTrafficWeek: "Run once a week, midnight between Sat/Sun",
   },
   monitor: {

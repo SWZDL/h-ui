@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 	"h-ui/dao"
@@ -97,6 +98,14 @@ func UpdateConfigs(c *gin.Context) {
 		}
 
 		if key == constant.ResetTrafficCron {
+			value = strings.TrimSpace(value)
+			if value != "" {
+				parser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor)
+				if _, err := parser.Parse(value); err != nil {
+					vo.Fail(fmt.Sprintf("reset traffic cron is invalid: %v", err), c)
+					return
+				}
+			}
 			resetTrafficCron, err := service.GetConfig(constant.ResetTrafficCron)
 			if err != nil {
 				vo.Fail(err.Error(), c)

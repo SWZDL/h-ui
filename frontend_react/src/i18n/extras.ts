@@ -213,7 +213,7 @@ export const extras = {
       certPath: "Certificate path",
       keyPath: "Private key path",
       cronHint:
-        "Cron expression evaluated by the scheduler, e.g. @monthly or 0 0 1 * *.",
+        "Use any standard 5-field cron expression or scheduler shortcut. For example, 0 0 15 * * runs at midnight on the 15th of every month.",
       cronPreset: "Preset",
       exportFile: "h-ui-config.json",
     },
@@ -457,7 +457,7 @@ export const extras = {
       httpsHint: "启用后将通过 TLS 提供面板访问，证书与私钥均为必填。",
       certPath: "证书路径",
       keyPath: "私钥路径",
-      cronHint: "调度器使用的 Cron 表达式，例如 @monthly 或 0 0 1 * *。",
+      cronHint: "支持标准五字段 Cron 表达式和调度器快捷写法。例如 0 0 15 * * 表示每月 15 日午夜运行，也可以将日期改为 1–31。",
       cronPreset: "常用表达式",
       exportFile: "h-ui-config.json",
     },
@@ -713,7 +713,7 @@ export const extras = {
       certPath: "Путь к сертификату",
       keyPath: "Путь к ключу",
       cronHint:
-        "Cron-выражение планировщика, например @monthly или 0 0 1 * *.",
+        "Поддерживаются стандартные 5-польные выражения cron и сокращения планировщика. Например, 0 0 15 * * запускает задачу в полночь 15-го числа каждого месяца.",
       cronPreset: "Шаблоны",
       exportFile: "h-ui-config.json",
     },

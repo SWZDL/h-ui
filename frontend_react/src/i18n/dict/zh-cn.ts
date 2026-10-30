@@ -116,6 +116,7 @@ export default {
     resetTrafficCronTip:
       "计划任务表达式，参考：https://pkg.go.dev/github.com/robfig/cron/v3",
     resetTrafficMonth: "每月运行一次，每月第一天午夜",
+    resetTrafficMonth15: "每月 15 日午夜",
     resetTrafficWeek: "每周运行一次，周六/周日午夜",
   },
   monitor: {

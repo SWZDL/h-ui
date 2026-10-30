@@ -156,8 +156,8 @@ export function LoginPage() {
             </div>
           </header>
 
-          <div className="flex flex-1 items-center justify-center px-4 pb-20 md:px-8">
-            <div className="w-full max-w-sm">
+          <div className="flex flex-1 items-center justify-center px-4 pb-20 md:px-10 xl:px-14">
+            <div className="w-full max-w-md">
               <div className="mb-8 flex flex-col gap-2">
                 <div className="mb-2 flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15 lg:hidden">
                   <LogoMark className="size-7" />

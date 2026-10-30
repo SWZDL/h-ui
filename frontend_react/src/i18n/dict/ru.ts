@@ -118,6 +118,7 @@ export default {
     resetTrafficCronTip:
       "Выражение cron для планировщика, справка: https://pkg.go.dev/github.com/robfig/cron/v3",
     resetTrafficMonth: "Запуск раз в месяц, в полночь первого числа",
+    resetTrafficMonth15: "В полночь 15-го числа каждого месяца",
     resetTrafficWeek:
       "Запуск раз в неделю, в полночь между субботой и воскресеньем",
   },

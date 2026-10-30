@@ -72,6 +72,7 @@ const CONFIG_KEYS: string[] = [
 
 const CRON_PRESETS = [
   { value: "@monthly", labelKey: "config.resetTrafficMonth" },
+  { value: "0 0 15 * *", labelKey: "config.resetTrafficMonth15" },
   { value: "@weekly", labelKey: "config.resetTrafficWeek" },
 ] as const;
 
@@ -656,6 +657,7 @@ export function SystemConfigPage() {
                       autoComplete="off"
                       spellCheck={false}
                       className="font-mono"
+                      placeholder="0 0 15 * *"
                       value={form.resetTrafficCron}
                       onChange={(event) =>
                         setField("resetTrafficCron", event.target.value)

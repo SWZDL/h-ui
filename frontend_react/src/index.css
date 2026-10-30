@@ -43,7 +43,7 @@
   --secondary-foreground: oklch(0.32 0.024 268);
 
   --muted: oklch(0.967 0.005 266);
-  --muted-foreground: oklch(0.53 0.02 266);
+  --muted-foreground: oklch(0.47 0.02 266);
 
   --accent: oklch(0.955 0.014 268);
   --accent-foreground: oklch(0.34 0.04 268);
@@ -87,7 +87,7 @@
   --secondary-foreground: oklch(0.955 0.004 266);
 
   --muted: oklch(0.245 0.016 266);
-  --muted-foreground: oklch(0.705 0.018 266);
+  --muted-foreground: oklch(0.74 0.018 266);
 
   --accent: oklch(0.28 0.026 268);
   --accent-foreground: oklch(0.965 0.004 266);
@@ -154,9 +154,9 @@
 }
 
 @theme {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, "Noto Sans", "PingFang SC", "Hiragino Sans GB",
-    "Microsoft YaHei", sans-serif;
+  --font-sans: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei UI",
+    "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC",
+    Roboto, Arial, sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
 }
@@ -171,10 +171,11 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground;
     font-family: var(--font-sans);
-    font-feature-settings: "cv11", "ss01";
     text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: auto;
+    -moz-osx-font-smoothing: auto;
   }
 
   ::selection {
