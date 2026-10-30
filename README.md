@@ -23,7 +23,7 @@ Just the panel for Hysteria2
 ## Features
 
 - Lightweight, low resource usage, easy to deploy
-- Monitor system status and Hysteria2 status
+- System status (host usage and Hysteria2 health) on the overview page, visible to admins and users alike
 - Limit user traffic, user online status, force users to log off, number of online users, reset user traffic
 - Limit the number of users' online devices at the same time, the number of online devices
 - User subscription link, node URL, import and export users
@@ -57,7 +57,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/SWZDL/h-ui/main/install.sh)
 Install [Custom Version](https://github.com/SWZDL/h-ui/releases)
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/SWZDL/h-ui/main/install.sh) v0.1.0
+bash <(curl -fsSL https://raw.githubusercontent.com/SWZDL/h-ui/main/install.sh) v0.1.2
 ```
 
 ### systemd

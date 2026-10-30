@@ -22,5 +22,5 @@ const (
 	RoleAdmin = "admin"
 	RoleUser  = "user"
 
-	Version = "v0.1.0"
+	Version = "v0.1.2"
 )

@@ -23,7 +23,7 @@
 ## 主要功能
 
 - 轻量级、资源占用低、易于部署
-- 监控系统状态和 Hysteria2 状态
+- 概览页展示系统状态（主机负载与 Hysteria2 服务状态），管理员和用户均可见
 - 限制用户流量、用户在线状态、强制用户下线、在线用户数、重设用户流量
 - 限制用户同时在线设备数、在线设备数量
 - 用户订阅链接、节点URL、导入和导出用户
@@ -57,7 +57,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/SWZDL/h-ui/main/install.sh)
 安装[自定义版本](https://github.com/SWZDL/h-ui/releases)
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/SWZDL/h-ui/main/install.sh) v0.1.0
+bash <(curl -fsSL https://raw.githubusercontent.com/SWZDL/h-ui/main/install.sh) v0.1.2
 ```
 
 ### systemd
