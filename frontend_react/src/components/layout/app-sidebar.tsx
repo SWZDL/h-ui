@@ -39,7 +39,8 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/auth";
 import { useI18n } from "@/i18n";
-import { navGroups } from "@/lib/navigation";
+import { navGroupsFor } from "@/lib/navigation";
+import { cn } from "@/lib/utils";
 
 export function AppSidebar() {
   const { pathname } = useLocation();
@@ -52,6 +53,7 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const initials = (user?.username ?? "H").slice(0, 2).toUpperCase();
   const roleLabel = isAdmin ? t("app.roleAdmin") : t("app.roleUser");
+  const groups = navGroupsFor(isAdmin);
 
   const handleLogout = () => {
     logout();
@@ -72,7 +74,7 @@ export function AppSidebar() {
       <SidebarSeparator />
 
       <SidebarContent className="px-0 py-2">
-        {navGroups.map((group) => (
+        {groups.map((group) => (
           <SidebarGroup key={group.labelKey} className="py-1">
             <SidebarGroupLabel>{t(group.labelKey)}</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -94,7 +96,10 @@ export function AppSidebar() {
                           <CollapsibleTrigger asChild>
                             <SidebarMenuButton
                               tooltip={t(entry.labelKey)}
-                              isActive={groupActive}
+                              className={cn(
+                                groupActive &&
+                                  "bg-sidebar-accent text-sidebar-accent-foreground"
+                              )}
                             >
                               <Icon />
                               <span>{t(entry.labelKey)}</span>

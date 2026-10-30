@@ -113,6 +113,12 @@ func Hysteria2Url(c *gin.Context) {
 		return
 	}
 
+	// Users may only build URLs for their own account; admins keep full access.
+	if err = service.CheckAccountAccess(c, *hysteria2UrlDto.AccountId); err != nil {
+		vo.Fail(err.Error(), c)
+		return
+	}
+
 	url, err := service.Hysteria2Url(*hysteria2UrlDto.AccountId, *hysteria2UrlDto.Hostname)
 	if err != nil {
 		vo.Fail(err.Error(), c)
@@ -136,6 +142,13 @@ func Hysteria2SubscribeUrl(c *gin.Context) {
 	if err != nil {
 		return
 	}
+
+	// Users may only build subscription URLs for their own account.
+	if err = service.CheckAccountAccess(c, *hysteria2SubscribeUrlDto.AccountId); err != nil {
+		vo.Fail(err.Error(), c)
+		return
+	}
+
 	subscribeUrl, err := service.Hysteria2SubscribeUrl(*hysteria2SubscribeUrlDto.AccountId,
 		*hysteria2SubscribeUrlDto.Protocol,
 		*hysteria2SubscribeUrlDto.Host)

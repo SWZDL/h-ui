@@ -33,6 +33,9 @@ func JWTHandler() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+		// Authorization helpers read the account from here instead of parsing
+		// the token a second time.
+		c.Set(constant.AccountContextKey, myClaims.AccountBo)
 		c.Next()
 	}
 }

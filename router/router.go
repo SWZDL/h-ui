@@ -40,9 +40,17 @@ func Router(router *gin.Engine, huiWebContext *string, webFrontend string) {
 
 		globalGroup.Use(middleware.JWTHandler())
 
-		globalGroup.Use(middleware.AdminHandler())
+		// Endpoints every authenticated account may call. Handlers scope their
+		// data to the caller unless the caller is an administrator.
+		huiUserApi := globalGroup.Group("/hui")
+		{
+			initAccountUserRouter(huiUserApi)
+			initHysteria2UserRouter(huiUserApi)
+		}
 
-		huiAdminApi := globalGroup.Group("/hui")
+		// Administrative endpoints. Requiring the admin role here keeps the
+		// management surface closed to regular accounts.
+		huiAdminApi := globalGroup.Group("/hui", middleware.AdminHandler())
 		{
 			initAccountAdminRouter(huiAdminApi)
 			initConfigRouter(huiAdminApi)

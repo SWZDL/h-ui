@@ -1,33 +1,12 @@
-import {
-  EyeIcon,
-  EyeOffIcon,
-  KeyRoundIcon,
-  LogInIcon,
-  ShieldCheckIcon,
-  TriangleAlertIcon,
-  UserRoundIcon,
-  WorkflowIcon,
-  ZapIcon,
-} from "lucide-react";
+import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { useState, type FormEvent, type KeyboardEvent } from "react";
 import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
-import { Logo, LogoMark } from "@/components/logo";
+import { LogoMark } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { Button } from "@/components/ui/button";
-import {
-  Field,
-  FieldError,
-  FieldLabel,
-} from "@/components/ui/field";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-} from "@/components/ui/input-group";
+import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Spinner } from "@/components/ui/spinner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/contexts/auth";
 import { useI18n } from "@/i18n";
 
@@ -90,171 +69,125 @@ export function LoginPage() {
     setCapsLock(Boolean(key && key.length === 1 && key >= "A" && key <= "Z"));
   };
 
-  const points = [
-    { icon: WorkflowIcon, title: t("login.point1"), description: t("login.point1Desc") },
-    { icon: ZapIcon, title: t("login.point2"), description: t("login.point2Desc") },
-    { icon: ShieldCheckIcon, title: t("login.point3"), description: t("login.point3Desc") },
-  ];
+  const inputClass =
+    "h-11 w-full rounded-none border-0 border-b border-input bg-transparent px-0 text-[15px] text-foreground outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-foreground aria-invalid:border-destructive aria-invalid:focus:border-destructive";
 
   return (
-    <TooltipProvider delayDuration={150}>
-      <div className="grid min-h-svh lg:grid-cols-[1.08fr_1fr]">
-        {/* Brand panel — intentionally dark in both themes. */}
-        <aside className="relative hidden flex-col justify-between overflow-hidden bg-[oklch(0.165_0.022_268)] p-10 text-white lg:flex xl:p-14">
-          <div className="bg-grid-light pointer-events-none absolute inset-0 opacity-70" />
-          <div className="pointer-events-none absolute -top-32 -right-24 size-[420px] rounded-full bg-primary/30 blur-[130px]" />
-          <div className="pointer-events-none absolute bottom-[-180px] left-[-120px] size-[380px] rounded-full bg-[oklch(0.7_0.16_190)]/20 blur-[130px]" />
+    <div className="relative flex min-h-svh flex-col overflow-hidden bg-background">
+      <div
+        aria-hidden
+        className="bg-grid pointer-events-none absolute inset-0 opacity-[0.32]"
+      />
 
-          <div className="relative">
-            <Logo className="text-white [&_span]:text-white/90" />
-          </div>
+      <header className="relative z-10 flex h-16 shrink-0 items-center justify-end gap-0.5 px-5 md:px-8">
+        <ThemeToggle />
+        <LanguageSwitcher />
+      </header>
 
-          <div className="relative flex max-w-lg flex-col gap-8">
-            <div className="flex flex-col gap-4">
-              <h2 className="text-3xl font-semibold tracking-tight text-white text-balance xl:text-4xl">
-                {t("login.brandTitle")}
-              </h2>
-              <p className="text-sm leading-relaxed text-white/60">
-                {t("login.brandSubtitle")}
-              </p>
+      <main className="relative z-10 flex flex-1 items-center justify-center px-5 pb-24">
+        <div className="animate-in fade-in slide-in-from-bottom-2 w-full max-w-[420px] duration-500">
+          <div className="rounded-[12px] border border-border bg-card p-7 sm:p-9">
+            <h1 className="sr-only">{t("login.title")}</h1>
+
+            <div className="mb-9 flex items-center gap-3">
+              <LogoMark className="size-9 rounded-[10px] ring-1 ring-border" />
+              <span className="text-sm font-semibold tracking-tight">
+                {t("login.title")}
+              </span>
             </div>
 
-            <ul className="flex flex-col gap-4">
-              {points.map((point) => (
-                <li key={point.title} className="flex items-start gap-3">
-                  <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/8 ring-1 ring-white/10">
-                    <point.icon className="size-4 text-white/80" />
-                  </span>
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-sm font-medium text-white/90">
-                      {point.title}
-                    </span>
-                    <span className="text-xs leading-relaxed text-white/45">
-                      {point.description}
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="relative flex items-center justify-between text-[11px] text-white/35">
-            <span>© {new Date().getFullYear()} H UI</span>
-            <span className="font-mono tracking-wide">Hysteria2</span>
-          </div>
-        </aside>
-
-        {/* Form panel */}
-        <main className="relative flex flex-col">
-          <header className="flex items-center justify-between p-4 md:p-6">
-            <div className="lg:hidden">
-              <Logo />
-            </div>
-            <div className="ml-auto flex items-center gap-1">
-              <ThemeToggle />
-              <LanguageSwitcher />
-            </div>
-          </header>
-
-          <div className="flex flex-1 items-center justify-center px-4 pb-20 md:px-10 xl:px-14">
-            <div className="w-full max-w-md">
-              <div className="mb-8 flex flex-col gap-2">
-                <div className="mb-2 flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15 lg:hidden">
-                  <LogoMark className="size-7" />
-                </div>
-                <p className="text-xs font-medium tracking-[0.16em] text-muted-foreground uppercase">
-                  {t("app.tagline")}
-                </p>
-                <h1 className="text-2xl font-semibold tracking-tight">
-                  {t("login.title")}
-                </h1>
-              </div>
-
-              <form className="flex flex-col gap-5" onSubmit={handleSubmit} noValidate>
-                <Field data-invalid={Boolean(errors.username)}>
-                  <FieldLabel htmlFor="username">{t("login.username")}</FieldLabel>
-                  <InputGroup className="h-10">
-                    <InputGroupAddon>
-                      <UserRoundIcon className="text-muted-foreground" />
-                    </InputGroupAddon>
-                    <InputGroupInput
-                      id="username"
-                      name="username"
-                      autoComplete="username"
-                      autoFocus
-                      placeholder={t("login.usernamePlaceholder")}
-                      value={username}
-                      aria-invalid={Boolean(errors.username)}
-                      onChange={(event) => {
-                        setUsername(event.target.value);
-                        setErrors((prev) => ({ ...prev, username: undefined }));
-                      }}
-                    />
-                  </InputGroup>
-                  {errors.username && <FieldError>{errors.username}</FieldError>}
-                </Field>
-
-                <Field data-invalid={Boolean(errors.pass)}>
-                  <div className="flex items-center justify-between">
-                    <FieldLabel htmlFor="password">{t("login.password")}</FieldLabel>
-                    {capsLock && (
-                      <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                        <TriangleAlertIcon className="size-3" />
-                        {t("login.capsLock")}
-                      </span>
-                    )}
-                  </div>
-                  <InputGroup className="h-10">
-                    <InputGroupAddon>
-                      <KeyRoundIcon className="text-muted-foreground" />
-                    </InputGroupAddon>
-                    <InputGroupInput
-                      id="password"
-                      name="pass"
-                      autoComplete="current-password"
-                      placeholder={t("login.passwordPlaceholder")}
-                      type={passwordVisible ? "text" : "password"}
-                      value={password}
-                      aria-invalid={Boolean(errors.pass)}
-                      onChange={(event) => {
-                        setPassword(event.target.value);
-                        setErrors((prev) => ({ ...prev, pass: undefined }));
-                      }}
-                      onKeyUp={checkCapsLock}
-                    />
-                    <InputGroupAddon align="inline-end">
-                      <InputGroupButton
-                        size="icon-xs"
-                        onClick={() => setPasswordVisible((prev) => !prev)}
-                        aria-label={
-                          passwordVisible ? t("common.close") : t("common.select")
-                        }
-                      >
-                        {passwordVisible ? <EyeOffIcon /> : <EyeIcon />}
-                      </InputGroupButton>
-                    </InputGroupAddon>
-                  </InputGroup>
-                  {errors.pass && <FieldError>{errors.pass}</FieldError>}
-                </Field>
-
-                <Button
-                  type="submit"
-                  size="lg"
-                  className="mt-1 h-10 w-full"
-                  disabled={loading}
+            <form className="flex flex-col gap-6" onSubmit={handleSubmit} noValidate>
+              <Field data-invalid={Boolean(errors.username)} className="gap-2">
+                <FieldLabel
+                  htmlFor="username"
+                  className="text-[11px] font-medium tracking-[0.12em] text-muted-foreground uppercase"
                 >
-                  {loading ? <Spinner /> : <LogInIcon data-icon="inline-start" />}
-                  {loading ? t("login.signingIn") : t("login.login")}
-                </Button>
-              </form>
+                  {t("login.username")}
+                </FieldLabel>
+                <input
+                  id="username"
+                  name="username"
+                  autoComplete="username"
+                  autoFocus
+                  placeholder={t("login.usernamePlaceholder")}
+                  value={username}
+                  aria-invalid={Boolean(errors.username)}
+                  onChange={(event) => {
+                    setUsername(event.target.value);
+                    setErrors((prev) => ({ ...prev, username: undefined }));
+                  }}
+                  className={inputClass}
+                />
+                {errors.username && (
+                  <FieldError className="text-xs">{errors.username}</FieldError>
+                )}
+              </Field>
 
-              <p className="mt-8 text-center text-xs text-muted-foreground">
-                {t("login.footer")}
-              </p>
-            </div>
+              <Field data-invalid={Boolean(errors.pass)} className="gap-2">
+                <div className="flex items-center justify-between gap-3">
+                  <FieldLabel
+                    htmlFor="password"
+                    className="text-[11px] font-medium tracking-[0.12em] text-muted-foreground uppercase"
+                  >
+                    {t("login.password")}
+                  </FieldLabel>
+                  {capsLock && (
+                    <span className="shrink-0 text-[10px] tracking-wide text-muted-foreground">
+                      {t("login.capsLock")}
+                    </span>
+                  )}
+                </div>
+                <div className="relative">
+                  <input
+                    id="password"
+                    name="pass"
+                    autoComplete="current-password"
+                    placeholder={t("login.passwordPlaceholder")}
+                    type={passwordVisible ? "text" : "password"}
+                    value={password}
+                    aria-invalid={Boolean(errors.pass)}
+                    onChange={(event) => {
+                      setPassword(event.target.value);
+                      setErrors((prev) => ({ ...prev, pass: undefined }));
+                    }}
+                    onKeyUp={checkCapsLock}
+                    className={`${inputClass} pr-8`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setPasswordVisible((prev) => !prev)}
+                    aria-label={
+                      passwordVisible
+                        ? t("login.hidePassword")
+                        : t("login.showPassword")
+                    }
+                    className="absolute inset-y-0 right-0 flex w-8 items-center justify-center text-muted-foreground transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none"
+                  >
+                    {passwordVisible ? (
+                      <EyeOffIcon className="size-4" />
+                    ) : (
+                      <EyeIcon className="size-4" />
+                    )}
+                  </button>
+                </div>
+                {errors.pass && (
+                  <FieldError className="text-xs">{errors.pass}</FieldError>
+                )}
+              </Field>
+
+              <Button
+                type="submit"
+                size="lg"
+                className="mt-1 h-11 w-full rounded-[6px] text-sm font-medium"
+                disabled={loading}
+              >
+                {loading && <Spinner />}
+                {loading ? t("login.signingIn") : t("login.login")}
+              </Button>
+            </form>
           </div>
-        </main>
-      </div>
-    </TooltipProvider>
+        </div>
+      </main>
+    </div>
   );
 }

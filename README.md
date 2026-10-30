@@ -162,7 +162,8 @@ Manual Installation:
 - Login Username/Password: sysadmin/sysadmin
 - Connection Password: sysadmin.sysadmin
 
-Note: Only the system administrator can log in.
+Note: Any account can sign in. Regular users can only view their own quota, traffic,
+subscription links and node URLs; management features stay restricted to administrators.
 
 ## System Upgrade
 

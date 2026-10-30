@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { LogoMark } from "@/components/logo";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { RouteFallback } from "@/components/route-fallback";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Breadcrumb,
@@ -18,13 +19,15 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { useAuth } from "@/contexts/auth";
 import { useI18n } from "@/i18n";
-import { matchNav } from "@/lib/navigation";
+import { matchNav, navGroupsFor } from "@/lib/navigation";
 
 export function AppShell() {
   const { pathname } = useLocation();
   const { t } = useI18n();
-  const match = matchNav(pathname);
+  const { isAdmin } = useAuth();
+  const match = matchNav(pathname, navGroupsFor(isAdmin));
   const pageLabel = match ? t(match.labelKey) : "H UI";
 
   useEffect(() => {
@@ -77,8 +80,10 @@ export function AppShell() {
         </header>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="mx-auto flex w-full max-w-[1440px] min-w-0 flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8">
-            <Outlet />
+          <div className="mx-auto flex w-full max-w-[1760px] min-w-0 flex-1 flex-col gap-8 p-4 md:p-6 lg:p-10">
+            <Suspense fallback={<RouteFallback />}>
+              <Outlet />
+            </Suspense>
           </div>
         </div>
       </SidebarInset>

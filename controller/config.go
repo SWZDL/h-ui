@@ -211,6 +211,39 @@ func GetHysteria2Config(c *gin.Context) {
 	vo.Success(config, c)
 }
 
+// GetHysteria2RawConfig returns the generated YAML file as text so the panel can
+// show and edit the effective configuration.
+func GetHysteria2RawConfig(c *gin.Context) {
+	content, err := service.GetHysteria2RawConfig()
+	if err != nil {
+		vo.Fail(err.Error(), c)
+		return
+	}
+	vo.Success(gin.H{"content": content}, c)
+}
+
+// UpdateHysteria2RawConfig stores an edited YAML document and restarts the
+// Hysteria2 process when it is running, so the change takes effect immediately.
+func UpdateHysteria2RawConfig(c *gin.Context) {
+	rawConfigDto, err := validateField(c, dto.Hysteria2RawConfigDto{})
+	if err != nil {
+		return
+	}
+
+	if err = service.SetHysteria2RawConfig(*rawConfigDto.Content); err != nil {
+		vo.Fail(err.Error(), c)
+		return
+	}
+
+	if service.Hysteria2IsRunning() {
+		if err = service.RestartHysteria2(); err != nil {
+			vo.Fail(err.Error(), c)
+			return
+		}
+	}
+	vo.Success(nil, c)
+}
+
 func UpdateHysteria2Config(c *gin.Context) {
 	hysteria2ServerConfig, err := validateField(c, bo.Hysteria2ServerConfig{})
 	if err != nil {

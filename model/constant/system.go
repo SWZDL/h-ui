@@ -15,5 +15,12 @@ const (
 
 	TokenType = "Bearer"
 
+	// AccountContextKey is where JWTHandler stores the authenticated account so
+	// the authorization helpers do not have to parse the token again.
+	AccountContextKey = "h-ui-account"
+
+	RoleAdmin = "admin"
+	RoleUser  = "user"
+
 	Version = "v0.1.0"
 )

@@ -5,18 +5,17 @@ import (
 	"h-ui/model/constant"
 	"h-ui/model/vo"
 	"h-ui/service"
-	"h-ui/util"
 )
 
 func AdminHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		myClaims, err := service.ParseToken(service.GetToken(c))
+		accountBo, err := service.GetCurrentAccount(c)
 		if err != nil {
 			vo.Fail(err.Error(), c)
 			c.Abort()
 			return
 		}
-		if !util.ArrContain(myClaims.AccountBo.Roles, "admin") {
+		if !service.IsAdmin(accountBo) {
 			vo.Fail(constant.ForbiddenError, c)
 			c.Abort()
 			return

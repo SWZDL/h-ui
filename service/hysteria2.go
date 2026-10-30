@@ -4,13 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v3"
 	"h-ui/dao"
+	"h-ui/model/bo"
 	"h-ui/model/constant"
 	"h-ui/model/vo"
 	"h-ui/proxy"
 	"h-ui/util"
-	"os"
 )
 
 func InitHysteria2() error {
@@ -48,30 +47,29 @@ func setHysteria2ConfigYAML() error {
 		return err
 	}
 
-	// update auth http url
-	if *serverConfig.Auth.HTTP.URL != authHttpUrl {
+	// Keep the auth callback pointing at this panel. A hand-edited config can
+	// legitimately lack the block, so build it when absent instead of assuming
+	// it exists.
+	authChanged := false
+	if serverConfig.Auth == nil || serverConfig.Auth.HTTP == nil || serverConfig.Auth.HTTP.URL == nil {
+		authType := "http"
+		insecure := true
+		serverConfig.Auth = &bo.ServerConfigAuth{
+			Type: &authType,
+			HTTP: &bo.ServerConfigAuthHTTP{URL: &authHttpUrl, Insecure: &insecure},
+		}
+		authChanged = true
+	} else if *serverConfig.Auth.HTTP.URL != authHttpUrl {
 		serverConfig.Auth.HTTP.URL = &authHttpUrl
+		authChanged = true
+	}
+	if authChanged {
 		if err := UpdateHysteria2Config(serverConfig); err != nil {
 			return err
 		}
 	}
 
-	hysteria2Config, err := yaml.Marshal(&serverConfig)
-	if err != nil {
-		logrus.Errorf("marshal hysteria2 config err: %v", err)
-		return errors.New("marshal hysteria2 config err")
-	}
-	file, err := os.OpenFile(constant.Hysteria2ConfigPath, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
-	if err != nil {
-		logrus.Errorf("create hysteria2 server config file err: %v", err)
-		return errors.New("create hysteria2 server config file err")
-	}
-	_, err = file.WriteString(string(hysteria2Config))
-	if err != nil {
-		logrus.Errorf("write hysteria2 config.json file err: %v", err)
-		return errors.New("hysteria2 config.json file write err")
-	}
-	return nil
+	return writeHysteria2ConfigYAML(serverConfig)
 }
 
 func Hysteria2IsRunning() bool {

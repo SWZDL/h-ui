@@ -182,14 +182,17 @@ export function DashboardPage() {
         }
       />
 
-      <Card className="relative overflow-hidden">
-        <div className="pointer-events-none absolute -top-24 -right-16 size-64 rounded-full bg-primary/8 blur-3xl" />
+      <Card className="relative overflow-hidden border-0 bg-foreground text-background ring-0 dark:bg-card dark:text-card-foreground dark:ring-1 dark:ring-foreground/10">
+        <div className="pointer-events-none absolute -top-24 -right-16 size-64 rounded-full bg-white/8 blur-3xl dark:bg-primary/8" />
         <CardHeader>
-          <CardTitle className="text-base font-medium text-muted-foreground">
+          <CardTitle className="text-xs font-medium tracking-[0.14em] text-background/55 uppercase dark:text-muted-foreground">
             {t("dashboard.greeting")}
           </CardTitle>
           <CardAction>
-            <Badge variant="outline" className="font-mono text-[10px] uppercase">
+            <Badge
+              variant="outline"
+              className="border-background/25 font-mono text-[10px] text-background/75 uppercase dark:border-border dark:text-muted-foreground"
+            >
               {account?.role ?? (isAdmin ? "admin" : "user")}
             </Badge>
           </CardAction>
@@ -199,8 +202,10 @@ export function DashboardPage() {
             <div className="flex items-center gap-4">
               <LogoMark className="size-14 rounded-2xl" />
               <div className="flex flex-col gap-1">
-                <p className="text-lg font-medium text-balance">{greeting()}</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="font-serif text-2xl leading-snug font-normal tracking-tight text-balance md:text-[28px]">
+                  {greeting()}
+                </p>
+                <p className="text-sm text-background/60 dark:text-muted-foreground">
                   {t("dashboard.memberSince", {
                     date: formatDateTimeValue(account?.createTime),
                   })}
@@ -209,13 +214,18 @@ export function DashboardPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <Button size="sm" onClick={() => void handleSubscribe()}>
+              <Button
+                size="sm"
+                className="bg-background text-foreground hover:bg-background/85 dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/85"
+                onClick={() => void handleSubscribe()}
+              >
                 <Share2Icon data-icon="inline-start" />
                 {t("common.subscribe")}
               </Button>
               <Button
                 size="sm"
                 variant="outline"
+                className="border-background/25 bg-transparent text-background hover:bg-background/10 hover:text-background dark:border-border dark:text-foreground dark:hover:bg-muted dark:hover:text-foreground"
                 onClick={() => void handleSubscribeQr()}
               >
                 <QrCodeIcon data-icon="inline-start" />
@@ -224,6 +234,7 @@ export function DashboardPage() {
               <Button
                 size="sm"
                 variant="outline"
+                className="border-background/25 bg-transparent text-background hover:bg-background/10 hover:text-background dark:border-border dark:text-foreground dark:hover:bg-muted dark:hover:text-foreground"
                 onClick={() => void handleNodeUrl()}
               >
                 <LinkIcon data-icon="inline-start" />
@@ -232,6 +243,7 @@ export function DashboardPage() {
               <Button
                 size="sm"
                 variant="outline"
+                className="border-background/25 bg-transparent text-background hover:bg-background/10 hover:text-background dark:border-border dark:text-foreground dark:hover:bg-muted dark:hover:text-foreground"
                 onClick={() => void handleNodeQr()}
               >
                 <QrCodeIcon data-icon="inline-start" />
@@ -240,15 +252,15 @@ export function DashboardPage() {
             </div>
           </div>
 
-          <Separator />
+          <Separator className="bg-background/12 dark:bg-border" />
 
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="flex items-center gap-3">
-              <span className="flex size-9 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+              <span className="flex size-9 items-center justify-center rounded-lg bg-background/10 text-background/80 dark:bg-muted dark:text-muted-foreground">
                 <LaptopIcon className="size-4" />
               </span>
               <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-background/55 dark:text-muted-foreground">
                   {t("dashboard.activeSessions")}
                 </span>
                 <span className="text-sm font-medium tabular-nums">
@@ -257,11 +269,11 @@ export function DashboardPage() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className="flex size-9 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+              <span className="flex size-9 items-center justify-center rounded-lg bg-background/10 text-background/80 dark:bg-muted dark:text-muted-foreground">
                 <TimerIcon className="size-4" />
               </span>
               <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-background/55 dark:text-muted-foreground">
                   {t("dashboard.lastConnection")}
                 </span>
                 <span className="text-sm font-medium tabular-nums">
@@ -272,11 +284,11 @@ export function DashboardPage() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <span className="flex size-9 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+              <span className="flex size-9 items-center justify-center rounded-lg bg-background/10 text-background/80 dark:bg-muted dark:text-muted-foreground">
                 <CalendarClockIcon className="size-4" />
               </span>
               <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-background/55 dark:text-muted-foreground">
                   {t("account.expireTime")}
                 </span>
                 <span className="text-sm font-medium tabular-nums">

@@ -1,17 +1,38 @@
-import type { ReactNode } from "react";
+import { Suspense, lazy, type ReactNode } from "react";
 import { HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import { RequireAdmin, RequireAuth } from "@/components/auth-guards";
 import { AppShell } from "@/components/layout/app-shell";
-import { AccountsPage } from "@/pages/accounts";
+import { RouteFallback } from "@/components/route-fallback";
 import { DashboardPage } from "@/pages/dashboard";
-import { HysteriaPage } from "@/pages/hysteria";
 import { LoginPage } from "@/pages/login";
-import { LogsPage } from "@/pages/logs";
-import { MonitorPage } from "@/pages/monitor";
-import { NotFoundPage } from "@/pages/not-found";
-import { RedirectPage } from "@/pages/redirect";
-import { SystemConfigPage } from "@/pages/system-config";
-import { TelegramPage } from "@/pages/telegram";
+
+// The shell, the guards, the dashboard and the login screen are all part of a
+// first paint for one of the two entry states, so they stay in the entry chunk.
+// Everything behind a menu click is fetched the first time it is opened.
+const AccountsPage = lazy(() =>
+  import("@/pages/accounts").then((m) => ({ default: m.AccountsPage }))
+);
+const HysteriaPage = lazy(() =>
+  import("@/pages/hysteria").then((m) => ({ default: m.HysteriaPage }))
+);
+const TelegramPage = lazy(() =>
+  import("@/pages/telegram").then((m) => ({ default: m.TelegramPage }))
+);
+const SystemConfigPage = lazy(() =>
+  import("@/pages/system-config").then((m) => ({ default: m.SystemConfigPage }))
+);
+const MonitorPage = lazy(() =>
+  import("@/pages/monitor").then((m) => ({ default: m.MonitorPage }))
+);
+const LogsPage = lazy(() =>
+  import("@/pages/logs").then((m) => ({ default: m.LogsPage }))
+);
+const NotFoundPage = lazy(() =>
+  import("@/pages/not-found").then((m) => ({ default: m.NotFoundPage }))
+);
+const RedirectPage = lazy(() =>
+  import("@/pages/redirect").then((m) => ({ default: m.RedirectPage }))
+);
 
 function admin(element: ReactNode) {
   return <RequireAdmin>{element}</RequireAdmin>;
@@ -21,8 +42,22 @@ export default function App() {
   return (
     <HashRouter>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/redirect/*" element={<RedirectPage />} />
+        <Route
+          path="/login"
+          element={
+            <Suspense fallback={<RouteFallback />}>
+              <LoginPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/redirect/*"
+          element={
+            <Suspense fallback={<RouteFallback />}>
+              <RedirectPage />
+            </Suspense>
+          }
+        />
 
         <Route
           element={

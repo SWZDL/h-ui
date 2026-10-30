@@ -31,12 +31,28 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
-      // Keep a single JS/CSS bundle: the Go server rewrites the base path in
-      // index.html only, so runtime-split chunks would not be rebased.
+      target: "es2022",
+      // One stylesheet for the whole app: it is small, shared by every route
+      // and cached for a year once fetched.
       cssCodeSplit: false,
+      // Byte counts that matter are printed by scripts/precompress.mjs, which
+      // reports the compressed sizes actually served.
+      reportCompressedSize: false,
       rollupOptions: {
         output: {
-          inlineDynamicImports: true,
+          // React changes rarely and every route needs it, so it gets its own
+          // chunk that stays valid across app-only deploys. Route modules are
+          // split by the dynamic imports in App.tsx.
+          manualChunks(id: string) {
+            if (
+              /node_modules[\\/](react|react-dom|scheduler|react-router|react-router-dom)[\\/]/.test(
+                id
+              )
+            ) {
+              return "vendor-react";
+            }
+            return undefined;
+          },
           sanitizeFileName(name: string): string {
             const match = DRIVE_LETTER_REGEX.exec(name);
             const driveLetter = match ? match[0] : "";

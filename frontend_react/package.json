@@ -6,8 +6,8 @@
   "description": "H UI React frontend",
   "scripts": {
     "dev": "vite --mode development",
-    "build": "tsc -b && vite build --mode production",
-    "build:prod": "tsc -b && vite build --mode production",
+    "build": "tsc -b && vite build --mode production && node scripts/precompress.mjs",
+    "build:prod": "tsc -b && vite build --mode production && node scripts/precompress.mjs",
     "preview": "vite preview --mode production",
     "typecheck": "tsc -b"
   },

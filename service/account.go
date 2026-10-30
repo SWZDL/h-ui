@@ -10,17 +10,26 @@ import (
 	"h-ui/model/dto"
 	"h-ui/model/entity"
 	"h-ui/model/vo"
+	"h-ui/util"
 )
 
+// Login authenticates any enabled account. The role carried by the resulting
+// token determines which API routes the account may call afterwards.
 func Login(username string, pass string) (string, error) {
-	account, err := dao.GetAccount("username = ? and pass = ? and role = 'admin' and deleted = 0", username, pass)
+	account, err := dao.GetAccount("username = ? and pass = ? and deleted = 0", username, pass)
 	if err != nil {
 		return "", err
+	}
+	// Only the explicit admin role grants management access; every other role
+	// is treated as a regular user.
+	role := constant.RoleUser
+	if account.Role != nil && *account.Role == constant.RoleAdmin {
+		role = constant.RoleAdmin
 	}
 	accountBo := bo.AccountBo{
 		Id:       *account.Id,
 		Username: *account.Username,
-		Roles:    []string{*account.Role},
+		Roles:    []string{role},
 		Deleted:  *account.Deleted,
 	}
 	return GenToken(accountBo)
@@ -143,16 +152,49 @@ func UpsertAccount(accounts []entity.Account) error {
 }
 
 func GetAccountInfo(c *gin.Context) (vo.AccountInfoVo, error) {
-	myClaims, err := ParseToken(GetToken(c))
+	accountBo, err := GetCurrentAccount(c)
 	if err != nil {
 		return vo.AccountInfoVo{}, err
 	}
-	if myClaims.AccountBo.Deleted != 0 {
-		return vo.AccountInfoVo{}, errors.New("this account has been disabled")
-	}
 	return vo.AccountInfoVo{
-		Id:       myClaims.AccountBo.Id,
-		Username: myClaims.AccountBo.Username,
-		Roles:    myClaims.AccountBo.Roles,
+		Id:       accountBo.Id,
+		Username: accountBo.Username,
+		Roles:    accountBo.Roles,
 	}, nil
+}
+
+// GetCurrentAccount returns the account bound to the current request. JWTHandler
+// stores it on the context; the token fallback keeps direct callers working.
+func GetCurrentAccount(c *gin.Context) (bo.AccountBo, error) {
+	if value, exists := c.Get(constant.AccountContextKey); exists {
+		if accountBo, ok := value.(bo.AccountBo); ok {
+			return accountBo, nil
+		}
+	}
+	myClaims, err := ParseToken(GetToken(c))
+	if err != nil {
+		return bo.AccountBo{}, err
+	}
+	if myClaims.AccountBo.Deleted != 0 {
+		return bo.AccountBo{}, errors.New("this account has been disabled")
+	}
+	return myClaims.AccountBo, nil
+}
+
+// IsAdmin reports whether the account carries the administrator role.
+func IsAdmin(accountBo bo.AccountBo) bool {
+	return util.ArrContain(accountBo.Roles, constant.RoleAdmin)
+}
+
+// CheckAccountAccess guards account-scoped read endpoints. Administrators may
+// read any account; every other account may only read itself.
+func CheckAccountAccess(c *gin.Context, accountId int64) error {
+	accountBo, err := GetCurrentAccount(c)
+	if err != nil {
+		return err
+	}
+	if !IsAdmin(accountBo) && accountBo.Id != accountId {
+		return errors.New(constant.ForbiddenError)
+	}
+	return nil
 }

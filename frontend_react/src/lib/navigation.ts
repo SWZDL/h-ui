@@ -27,6 +27,8 @@ export interface NavEntry {
 export interface NavGroup {
   labelKey: string;
   entries: NavEntry[];
+  /** Hidden from regular accounts; the routes themselves require the admin role. */
+  adminOnly?: boolean;
 }
 
 export const navGroups: NavGroup[] = [
@@ -42,6 +44,7 @@ export const navGroups: NavGroup[] = [
   },
   {
     labelKey: "app.nav.manage",
+    adminOnly: true,
     entries: [
       { to: "/account/list", labelKey: "nav.accounts", icon: UsersRoundIcon },
       { to: "/hysteria/list", labelKey: "nav.hysteria", icon: RocketIcon },
@@ -50,6 +53,7 @@ export const navGroups: NavGroup[] = [
   },
   {
     labelKey: "app.nav.system",
+    adminOnly: true,
     entries: [
       { to: "/config/list", labelKey: "nav.settings", icon: Settings2Icon },
       { to: "/monitor/system", labelKey: "nav.monitor", icon: ActivityIcon },
@@ -73,6 +77,11 @@ export const navGroups: NavGroup[] = [
   },
 ];
 
+/** The navigation that the signed-in account is allowed to see. */
+export function navGroupsFor(isAdmin: boolean): NavGroup[] {
+  return isAdmin ? navGroups : navGroups.filter((group) => !group.adminOnly);
+}
+
 export interface NavMatch {
   labelKey: string;
   groupKey: string;
@@ -80,8 +89,11 @@ export interface NavMatch {
 }
 
 /** Resolve the current route to sidebar / breadcrumb labels. */
-export function matchNav(pathname: string): NavMatch | null {
-  for (const group of navGroups) {
+export function matchNav(
+  pathname: string,
+  groups: NavGroup[] = navGroups
+): NavMatch | null {
+  for (const group of groups) {
     for (const entry of group.entries) {
       if (entry.to && pathname === entry.to) {
         return { labelKey: entry.labelKey, groupKey: group.labelKey };

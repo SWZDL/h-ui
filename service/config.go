@@ -9,6 +9,7 @@ import (
 	"h-ui/model/bo"
 	"h-ui/model/constant"
 	"h-ui/model/entity"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -103,7 +104,14 @@ func UpdateHysteria2Config(hysteria2ServerConfig bo.Hysteria2ServerConfig) error
 	if err != nil {
 		return err
 	}
-	return dao.UpdateConfig([]string{constant.Hysteria2Config}, map[string]interface{}{"value": string(yamlConfig)})
+	if err = dao.UpdateConfig([]string{constant.Hysteria2Config}, map[string]interface{}{"value": string(yamlConfig)}); err != nil {
+		return err
+	}
+
+	// The panel now exposes the YAML file for inspection and editing, so it has
+	// to reflect the stored configuration right away instead of waiting for the
+	// next service start.
+	return writeHysteria2ConfigYAML(hysteria2ServerConfig)
 }
 
 func SetHysteria2Config(hysteria2ServerConfig bo.Hysteria2ServerConfig) error {
@@ -112,6 +120,63 @@ func SetHysteria2Config(hysteria2ServerConfig bo.Hysteria2ServerConfig) error {
 		return err
 	}
 	return dao.UpdateConfig([]string{constant.Hysteria2Config}, map[string]interface{}{"value": string(config)})
+}
+
+// GetHysteria2RawConfig returns the YAML currently written to disk for the
+// Hysteria2 process. It is generated from the stored configuration every time
+// the service starts, so it is the effective configuration rather than a copy.
+func GetHysteria2RawConfig() (string, error) {
+	content, err := os.ReadFile(constant.Hysteria2ConfigPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", nil
+		}
+		return "", err
+	}
+	return string(content), nil
+}
+
+// SetHysteria2RawConfig validates an edited YAML document and stores it as the
+// Hysteria2 configuration. The auth block and traffic-stats secret are managed
+// by the panel and are re-injected afterwards, so editing one of those values
+// by hand cannot lock clients or the panel out.
+func SetHysteria2RawConfig(content string) error {
+	var serverConfig bo.Hysteria2ServerConfig
+	if err := yaml.Unmarshal([]byte(content), &serverConfig); err != nil {
+		return errors.New("invalid YAML: " + err.Error())
+	}
+	if serverConfig.Listen == nil || *serverConfig.Listen == "" {
+		return errors.New("listen is required")
+	}
+	if serverConfig.TrafficStats == nil || serverConfig.TrafficStats.Listen == nil {
+		return errors.New("trafficStats.listen is required")
+	}
+
+	if err := UpdateHysteria2Config(serverConfig); err != nil {
+		return err
+	}
+	return nil
+}
+
+// writeHysteria2ConfigYAML serialises a config and replaces the file the
+// Hysteria2 process reads.
+func writeHysteria2ConfigYAML(serverConfig bo.Hysteria2ServerConfig) error {
+	content, err := yaml.Marshal(&serverConfig)
+	if err != nil {
+		logrus.Errorf("marshal hysteria2 config err: %v", err)
+		return errors.New("marshal hysteria2 config err")
+	}
+	file, err := os.OpenFile(constant.Hysteria2ConfigPath, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+	if err != nil {
+		logrus.Errorf("create hysteria2 server config file err: %v", err)
+		return errors.New("create hysteria2 server config file err")
+	}
+	defer file.Close()
+	if _, err = file.WriteString(string(content)); err != nil {
+		logrus.Errorf("write hysteria2 config file err: %v", err)
+		return errors.New("hysteria2 config file write err")
+	}
+	return nil
 }
 
 func UpsertConfig(configs []entity.Config) error {
