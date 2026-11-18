@@ -235,47 +235,80 @@ func hysteria2Subscribe(conPass string, clientType string, host string, includeC
 	return userInfo, configStr, nil
 }
 
-// ProxySubscribe returns a subscription containing every enabled protocol for
-// the account. Hysteria2-only configurations retain their existing format.
+// ProxySubscribe includes only protocols whose services are currently running.
 func ProxySubscribe(conPass string, clientType string, host string) (string, string, error) {
-	vlessProfile, err := GetVlessConfig()
-	if err != nil || !vlessProfile.Enabled {
-		if clientType == constant.NekoBox {
-			clientType = constant.V2rayN
+	vlessRunning := false
+	if config, err := GetVlessConfig(); err == nil && config.Enabled {
+		if status, statusErr := proxy.XrayServiceStatusFor(config); statusErr == nil {
+			vlessRunning = status.Running
 		}
-		return Hysteria2Subscribe(conPass, clientType, host)
+	}
+	return proxySubscribeForRunningServices(conPass, clientType, host, Hysteria2IsRunning(), vlessRunning)
+}
+
+func proxySubscribeForRunningServices(conPass string, clientType string, host string, hysteria2Running bool, vlessRunning bool) (string, string, error) {
+	if !hysteria2Running && !vlessRunning {
+		return "", "", errors.New("no proxy service is running")
+	}
+	if clientType != constant.Shadowrocket && clientType != constant.Clash && clientType != constant.V2rayN && clientType != constant.NekoBox {
+		clientType = constant.Clash
 	}
 
 	if clientType == constant.V2rayN || clientType == constant.NekoBox {
-		userInfo, hysteria2URL, err := Hysteria2Subscribe(conPass, constant.V2rayN, host)
-		if err != nil {
-			return "", "", err
+		urls := make([]string, 0, 2)
+		userInfo := ""
+		if hysteria2Running {
+			_, hysteria2URL, err := Hysteria2Subscribe(conPass, constant.V2rayN, host)
+			if err != nil {
+				return "", "", err
+			}
+			urls = append(urls, strings.TrimSpace(hysteria2URL))
 		}
-		_, encodedVlessURL, err := VlessSubscribe(conPass, "")
-		if err != nil {
-			return "", "", err
+		if vlessRunning {
+			vlessInfo, encodedVlessURL, err := VlessSubscribe(conPass, "")
+			if err != nil {
+				return "", "", err
+			}
+			if userInfo == "" {
+				userInfo = vlessInfo
+			}
+			vlessURL, err := base64.StdEncoding.DecodeString(strings.TrimSpace(encodedVlessURL))
+			if err != nil {
+				return "", "", fmt.Errorf("decode VLESS subscription: %w", err)
+			}
+			urls = append(urls, strings.TrimSpace(string(vlessURL)))
 		}
-		vlessURL, err := base64.StdEncoding.DecodeString(strings.TrimSpace(encodedVlessURL))
-		if err != nil {
-			return "", "", fmt.Errorf("decode VLESS subscription: %w", err)
-		}
-		return userInfo, strings.Join([]string{strings.TrimSpace(hysteria2URL), strings.TrimSpace(string(vlessURL))}, "\n"), nil
+		return userInfo, strings.Join(urls, "\n"), nil
 	}
 
-	if clientType != constant.Shadowrocket && clientType != constant.Clash {
-		clientType = constant.Clash
+	configs := make([]string, 0, 2)
+	userInfo := ""
+	if hysteria2Running {
+		hysteria2Info, hysteria2Config, err := hysteria2Subscribe(conPass, clientType, host, false)
+		if err != nil {
+			return "", "", err
+		}
+		userInfo = hysteria2Info
+		configs = append(configs, hysteria2Config)
 	}
-	userInfo, hysteria2Config, err := hysteria2Subscribe(conPass, clientType, host, false)
-	if err != nil {
-		return "", "", err
+	if vlessRunning {
+		vlessInfo, vlessConfig, err := VlessSubscribe(conPass, constant.Clash)
+		if err != nil {
+			return "", "", err
+		}
+		if userInfo == "" {
+			userInfo = vlessInfo
+		}
+		configs = append(configs, vlessConfig)
 	}
-	_, vlessYAML, err := VlessSubscribe(conPass, constant.Clash)
-	if err != nil {
-		return "", "", err
-	}
-	combined, err := mergeClashSubscriptions(hysteria2Config, vlessYAML)
-	if err != nil {
-		return "", "", err
+
+	combined := configs[0]
+	if len(configs) == 2 {
+		var err error
+		combined, err = mergeClashSubscriptions(configs[0], configs[1])
+		if err != nil {
+			return "", "", err
+		}
 	}
 	if clientType == constant.Clash {
 		extension, err := GetConfig(constant.ClashExtension)

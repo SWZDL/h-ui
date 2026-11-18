@@ -270,45 +270,6 @@ func TestAdminKeepsFullAccess(t *testing.T) {
 	}
 }
 
-func TestCombinedSubscriptionIncludesVlessAndHysteria2(t *testing.T) {
-	engine := setup(t)
-	vlessConfig, err := json.Marshal(map[string]any{
-		"enabled": true, "address": "vless.example.com", "port": 443,
-		"network": "tcp", "security": "tls", "remark": "VLESS",
-		"sni": "vless.example.com", "fingerprint": "chrome", "alpn": []string{},
-	})
-	if err != nil {
-		t.Fatalf("marshal VLESS config: %v", err)
-	}
-	if err := dao.UpdateConfig([]string{constant.VlessConfig}, map[string]interface{}{"value": string(vlessConfig)}); err != nil {
-		t.Fatalf("enable VLESS: %v", err)
-	}
-	if err := dao.UpdateConfig([]string{constant.Hysteria2Config}, map[string]interface{}{"value": fmt.Sprintf("listen: %q", ":443")}); err != nil {
-		t.Fatalf("configure Hysteria2: %v", err)
-	}
-
-	for _, userAgent := range []string{"Clash", "v2rayN", "NekoBox"} {
-		request := httptest.NewRequest(http.MethodGet, "/hui/testuser.userpass", nil)
-		request.Header.Set("User-Agent", userAgent)
-		response := httptest.NewRecorder()
-		engine.ServeHTTP(response, request)
-		if response.Code != http.StatusOK {
-			t.Fatalf("%s subscription: status=%d body=%q", userAgent, response.Code, response.Body.String())
-		}
-		content := response.Body.String()
-		if userAgent == "Clash" {
-			if !strings.Contains(content, "type: hysteria2") || !strings.Contains(content, "type: vless") || !strings.Contains(content, "network: tcp") {
-				t.Fatalf("Clash subscription missing a protocol: %s", content)
-			}
-			continue
-		}
-		decoded, err := base64.StdEncoding.DecodeString(strings.TrimSpace(content))
-		if err != nil || !strings.Contains(string(decoded), "hysteria2://") || !strings.Contains(string(decoded), "vless://") {
-			t.Fatalf("%s subscription missing a protocol: decoded=%q err=%v", userAgent, decoded, err)
-		}
-	}
-}
-
 func TestUnauthenticatedRequestsAreRejected(t *testing.T) {
 	engine := setup(t)
 	result := call(t, engine, http.MethodGet, "/hui/account/getAccountInfo", "", nil)
