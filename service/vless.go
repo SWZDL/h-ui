@@ -277,6 +277,9 @@ func buildVlessConfigURL(config bo.VlessConfig, uuid string, username string, ac
 	if config.Security == "reality" {
 		values.Set("pbk", config.PublicKey)
 		values.Set("sid", config.ShortID)
+		// mihomo parses this to enable the X25519MLKEM768 key share; other
+		// clients ignore unknown share-link parameters.
+		values.Set("support-x25519mlkem768", "true")
 		if config.SpiderX != "" {
 			values.Set("spx", config.SpiderX)
 		}
@@ -357,6 +360,11 @@ type clashVlessProxy struct {
 type clashRealityOpts struct {
 	PublicKey string `yaml:"public-key"`
 	ShortID   string `yaml:"short-id"`
+	// SupportX25519MLKEM768 tells mihomo-based clients to advertise the
+	// X25519MLKEM768 key share. REALITY servers built on Xray >= v26.9.9 reject
+	// ClientHellos without it and silently fall back to the decoy certificate,
+	// which clients report as "REALITY authentication failed".
+	SupportX25519MLKEM768 bool `yaml:"support-x25519mlkem768,omitempty"`
 }
 
 type clashWSOpts struct {
@@ -407,7 +415,11 @@ func buildClashVlessConfigForAccount(config bo.VlessConfig, uuid string, usernam
 		proxyConfig.ALPN = config.ALPN
 	}
 	if config.Security == "reality" {
-		proxyConfig.RealityOpts = &clashRealityOpts{PublicKey: config.PublicKey, ShortID: config.ShortID}
+		proxyConfig.RealityOpts = &clashRealityOpts{
+			PublicKey:             config.PublicKey,
+			ShortID:               config.ShortID,
+			SupportX25519MLKEM768: true,
+		}
 	}
 	if config.Network == "ws" {
 		path := config.Path

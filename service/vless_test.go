@@ -47,6 +47,8 @@ func TestBuildVlessRealityURL(t *testing.T) {
 		"sid":        "abcd",
 		"spx":        "/health check",
 		"flow":       "xtls-rprx-vision",
+
+		"support-x25519mlkem768": "true",
 	} {
 		if got := query.Get(key); got != want {
 			t.Errorf("query %s: got %q, want %q", key, got, want)
@@ -143,6 +145,55 @@ func TestBuildVlessClashConfigHasProxyAndGroup(t *testing.T) {
 		if !strings.Contains(content, expected) {
 			t.Errorf("Clash YAML missing %q:\n%s", expected, content)
 		}
+	}
+}
+
+func TestBuildVlessClashRealityAdvertisesMLKEM(t *testing.T) {
+	config := bo.VlessConfig{
+		Address:     "cdn.example.com",
+		Port:        443,
+		Network:     "tcp",
+		Security:    "reality",
+		Remark:      "edge",
+		SNI:         "www.cloudflare.com",
+		Fingerprint: "chrome",
+		PublicKey:   "test-public-key",
+		ShortID:     "abcd1234",
+		Flow:        "xtls-rprx-vision",
+	}
+	content, err := BuildVlessClashSubscription(config, "11111111-1111-4111-8111-111111111111", "alice", "")
+	if err != nil {
+		t.Fatalf("build Clash subscription: %v", err)
+	}
+	var parsed struct {
+		Proxies []struct {
+			RealityOpts map[string]interface{} `yaml:"reality-opts"`
+		} `yaml:"proxies"`
+	}
+	if err := yaml.Unmarshal([]byte(content), &parsed); err != nil {
+		t.Fatalf("parse Clash subscription: %v", err)
+	}
+	if len(parsed.Proxies) != 1 {
+		t.Fatalf("expected a single proxy, got %d", len(parsed.Proxies))
+	}
+	if got, ok := parsed.Proxies[0].RealityOpts["support-x25519mlkem768"]; !ok || got != true {
+		t.Fatalf("reality-opts missing support-x25519mlkem768: %#v", parsed.Proxies[0].RealityOpts)
+	}
+	if parsed.Proxies[0].RealityOpts["public-key"] != "test-public-key" || parsed.Proxies[0].RealityOpts["short-id"] != "abcd1234" {
+		t.Fatalf("reality-opts lost keys: %#v", parsed.Proxies[0].RealityOpts)
+	}
+}
+
+func TestBuildVlessClashTLSHasNoRealityOpts(t *testing.T) {
+	config := bo.VlessConfig{
+		Address: "vless.example.com", Port: 443, Network: "tcp", Security: "tls", SNI: "tls.example.com",
+	}
+	content, err := BuildVlessClashSubscription(config, "11111111-1111-4111-8111-111111111111", "alice", "")
+	if err != nil {
+		t.Fatalf("build Clash subscription: %v", err)
+	}
+	if strings.Contains(content, "reality-opts") || strings.Contains(content, "support-x25519mlkem768") {
+		t.Fatalf("TLS subscription must not contain REALITY options:\n%s", content)
 	}
 }
 
