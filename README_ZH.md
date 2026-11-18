@@ -29,7 +29,7 @@ Hysteria2 管理面板，并提供 VLESS 客户端配置与订阅链接管理
 - 用户 Hysteria2/VLESS 订阅链接、节点 URL 和二维码，支持导入和导出用户
 - 管理 Hysteria2 配置和版本、端口跳跃
 - 管理本机 Xray VLESS 入站；h-ui 通过 Xray 本地 API 为账户同步 UUID、统计流量，并执行配额、到期、强制下线和在线设备数限制
-- 为账户生成 VLESS URI、Base64 订阅和 Clash Meta YAML。需在同一台主机安装 Xray；启用 VLESS 管理后，h-ui 可自动配置本地 API 并重启指定的 systemd 服务
+- 为账户生成 VLESS URI、Base64 订阅、Clash Meta YAML 和 Loon 节点列表。需在同一台主机安装 Xray；启用 VLESS 管理后，h-ui 可自动配置本地 API 并重启指定的 systemd 服务
 - 非 h-ui 创建的现有 Xray 用户不会被修改，也不纳入 h-ui 的配额和设备数限制
 - 更改 Web 端口、修改 Hysteria2 流量倍数
 - Telegram 通知
@@ -154,6 +154,12 @@ rm -rf /h-ui
 在「系统配置」中开启面板 HTTPS，并同时填写服务器上的完整证书链（如 `fullchain.pem`）和私钥（如 `privkey.pem`）路径，保存后使用 `https://域名:面板端口/` 访问。证书必须覆盖访问域名；仅将网址中的 `http` 改为 `https` 不会启用 TLS。
 
 配置证书后，同一面板端口上的 HTTP 请求会自动跳转到 HTTPS，保留端口、路径、查询参数及浏览器中的 `#/…` 页面路由；未加密请求不会进入面板 API。未配置证书时仍可使用 HTTP。证书续期后需重启 h-ui 以加载新证书。
+
+## Loon 订阅
+
+Loon 请求（`User-Agent: Loon/…`）会得到纯文本的 `[Proxy]` 节点段而不是 Clash YAML，面板上的订阅二维码可直接在 Loon 中作为订阅添加。
+
+REALITY 节点会带上 `tls-profile=chrome147`（Safari 或 iOS 指纹会映射为 `safari-ios-26`），即支持 X25519MLKEM768 的 TLS 指纹；因为 Xray v26.9.9 及以上的 REALITY 服务端会静默拒绝不带 X25519MLKEM768 的握手。可在 VLESS 配置的可选字段 `loonTlsProfile` 中覆盖为 `chrome`、`chrome147`、`safari-ios18`、`safari-ios-26`、`default` 或 `global`。Loon 不支持 gRPC 传输，此时会直接返回错误，而不是下发一个必然失败的节点。
 
 ## 默认安装信息
 

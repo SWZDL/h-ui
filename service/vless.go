@@ -159,6 +159,9 @@ func validateVlessConfig(config bo.VlessConfig) error {
 			return errors.New("VLESS vision flow requires TCP and TLS or Reality")
 		}
 	}
+	if err := validateLoonTLSProfile(config.LoonTLSProfile); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -245,11 +248,31 @@ func VlessSubscribe(conPass string, clientType string) (string, string, error) {
 		content, err := buildClashVlessConfig(config, account)
 		return userInfo, content, err
 	}
+	if clientType == constant.Loon {
+		name := vlessNodeName(config, valueOrEmpty(account.Username), valueOrEmpty(account.Remark))
+		node, err := buildLoonVlessNode(config, name, valueOrEmpty(account.VlessUUID))
+		if err != nil {
+			return "", "", err
+		}
+		return userInfo, loonSubscription([]string{node}), nil
+	}
 	return userInfo, base64.StdEncoding.EncodeToString([]byte(link)), nil
 }
 
 func buildVlessURL(config bo.VlessConfig, account entity.Account) string {
 	return buildVlessConfigURL(config, valueOrEmpty(account.VlessUUID), valueOrEmpty(account.Username), valueOrEmpty(account.Remark))
+}
+
+// vlessNodeName renders the display name shared by every subscription format.
+func vlessNodeName(config bo.VlessConfig, username string, accountRemark string) string {
+	name := accountRemark
+	if name == "" {
+		name = username
+	}
+	if config.Remark != "" {
+		name = config.Remark + " - " + name
+	}
+	return name
 }
 
 func buildVlessConfigURL(config bo.VlessConfig, uuid string, username string, accountRemark string) string {
@@ -303,13 +326,7 @@ func buildVlessConfigURL(config bo.VlessConfig, uuid string, username string, ac
 		}
 	}
 
-	name := accountRemark
-	if name == "" {
-		name = username
-	}
-	if config.Remark != "" {
-		name = config.Remark + " - " + name
-	}
+	name := vlessNodeName(config, username, accountRemark)
 	serverAddress := strings.Trim(strings.TrimSpace(config.Address), "[]")
 	endpoint := &url.URL{
 		Scheme:   "vless",
@@ -388,13 +405,7 @@ type clashVlessSubscription struct {
 }
 
 func buildClashVlessConfigForAccount(config bo.VlessConfig, uuid string, username string, accountRemark string) (string, error) {
-	name := accountRemark
-	if name == "" {
-		name = username
-	}
-	if config.Remark != "" {
-		name = config.Remark + " - " + name
-	}
+	name := vlessNodeName(config, username, accountRemark)
 	proxyConfig := clashVlessProxy{
 		Name:           name,
 		Type:           "vless",

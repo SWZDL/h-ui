@@ -12,6 +12,7 @@ type VlessConfig struct {
 	Remark          string   `json:"remark"`
 	SNI             string   `json:"sni"`
 	Fingerprint     string   `json:"fingerprint"`
+	LoonTLSProfile  string   `json:"loonTlsProfile"`
 	PublicKey       string   `json:"publicKey"`
 	ShortID         string   `json:"shortId"`
 	SpiderX         string   `json:"spiderX"`

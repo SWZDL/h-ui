@@ -192,6 +192,8 @@ func Hysteria2Subscribe(c *gin.Context) {
 		clientType = constant.V2rayN
 	} else if strings.Contains(userAgent, constant.NekoBox) {
 		clientType = constant.NekoBox
+	} else if strings.Contains(userAgent, constant.Loon) {
+		clientType = constant.Loon
 	} else {
 		clientType = constant.Clash
 	}
@@ -204,6 +206,8 @@ func Hysteria2Subscribe(c *gin.Context) {
 
 	if clientType == constant.Shadowrocket || clientType == constant.Clash {
 		c.Header("content-disposition", "attachment; filename=hui.yaml")
+	}
+	if clientType == constant.Shadowrocket || clientType == constant.Clash || clientType == constant.Loon {
 		c.Header("profile-update-interval", "12")
 		c.Header("subscription-userinfo", userInfo)
 	} else if clientType == constant.V2rayN || clientType == constant.NekoBox {

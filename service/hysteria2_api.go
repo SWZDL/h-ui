@@ -149,7 +149,7 @@ func hysteria2Subscribe(conPass string, clientType string, host string, includeC
 
 	userInfo := ""
 	configStr := ""
-	if clientType == constant.Shadowrocket || clientType == constant.Clash {
+	if clientType == constant.Shadowrocket || clientType == constant.Clash || clientType == constant.Loon {
 		userInfo = fmt.Sprintf("upload=%d; download=%d; total=%d; expire=%d",
 			*account.Upload,
 			*account.Download,
@@ -197,6 +197,10 @@ func hysteria2Subscribe(conPass string, clientType string, host string, includeC
 		}
 
 		hysteria2.SkipCertVerify = false
+
+		if clientType == constant.Loon {
+			return userInfo, loonSubscription([]string{buildLoonHysteria2Node(hysteria2)}), nil
+		}
 
 		proxyGroup := bo.ProxyGroup{
 			Name:    "PROXY",
@@ -250,7 +254,8 @@ func proxySubscribeForRunningServices(conPass string, clientType string, host st
 	if !hysteria2Running && !vlessRunning {
 		return "", "", errors.New("no proxy service is running")
 	}
-	if clientType != constant.Shadowrocket && clientType != constant.Clash && clientType != constant.V2rayN && clientType != constant.NekoBox {
+	if clientType != constant.Shadowrocket && clientType != constant.Clash && clientType != constant.V2rayN &&
+		clientType != constant.NekoBox && clientType != constant.Loon {
 		clientType = constant.Clash
 	}
 
@@ -279,6 +284,30 @@ func proxySubscribeForRunningServices(conPass string, clientType string, host st
 			urls = append(urls, strings.TrimSpace(string(vlessURL)))
 		}
 		return userInfo, strings.Join(urls, "\n"), nil
+	}
+
+	if clientType == constant.Loon {
+		sections := make([]string, 0, 2)
+		userInfo := ""
+		if hysteria2Running {
+			hysteria2Info, section, err := hysteria2Subscribe(conPass, constant.Loon, host, false)
+			if err != nil {
+				return "", "", err
+			}
+			userInfo = hysteria2Info
+			sections = append(sections, section)
+		}
+		if vlessRunning {
+			vlessInfo, section, err := VlessSubscribe(conPass, constant.Loon)
+			if err != nil {
+				return "", "", err
+			}
+			if userInfo == "" {
+				userInfo = vlessInfo
+			}
+			sections = append(sections, section)
+		}
+		return userInfo, mergeLoonSubscriptions(sections...), nil
 	}
 
 	configs := make([]string, 0, 2)

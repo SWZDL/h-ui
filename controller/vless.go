@@ -125,7 +125,9 @@ func VlessSubscribe(c *gin.Context) {
 	conPass := c.Param("conPass")
 	userAgent := strings.ToLower(c.Request.Header.Get("User-Agent"))
 	clientType := ""
-	if strings.Contains(userAgent, constant.Clash) {
+	if strings.Contains(userAgent, constant.Loon) {
+		clientType = constant.Loon
+	} else if strings.Contains(userAgent, constant.Clash) {
 		clientType = constant.Clash
 	}
 	userInfo, content, err := service.VlessSubscribe(conPass, clientType)
@@ -138,6 +140,11 @@ func VlessSubscribe(c *gin.Context) {
 	if clientType == constant.Clash {
 		c.Header("content-disposition", "attachment; filename=vless.yaml")
 		c.Data(200, "application/yaml; charset=utf-8", []byte(content))
+		return
+	}
+	if clientType == constant.Loon {
+		// Loon parses the plain text [Proxy] section itself.
+		c.Data(200, "text/plain; charset=utf-8", []byte(content))
 		return
 	}
 	// V2Ray clients (including v2rayN, NekoBox and Shadowrocket) accept a

@@ -29,7 +29,7 @@ A Hysteria2 management panel with VLESS client profile and subscription manageme
 - Hysteria2/VLESS user subscription links, node URLs and QR codes; import and export users
 - Manage Hysteria2 configuration and versions, port hopping
 - Configure a local Xray VLESS inbound; h-ui provisions account UUIDs, tracks Xray traffic, and enforces account quota, expiry, kick, and online-device limits through Xray's local API
-- Generate VLESS URIs, Base64 subscriptions and Clash Meta YAML. Xray must be installed on the same host; h-ui can enable its local API and restart the configured systemd service when VLESS management is enabled
+- Generate VLESS URIs, Base64 subscriptions, Clash Meta YAML and Loon node lists. Xray must be installed on the same host; h-ui can enable its local API and restart the configured systemd service when VLESS management is enabled
 - Existing Xray users not provisioned by h-ui are left untouched and remain outside h-ui quota/device enforcement
 - Change the Web port, modify the Hysteria2 traffic multiplier
 - Telegram notification
@@ -155,6 +155,12 @@ rm -rf /h-ui
 Enable HTTPS in System settings and supply both the server's full certificate chain (for example, `fullchain.pem`) and private key (`privkey.pem`). After saving, visit `https://your-domain:panel-port/`. The certificate must cover that domain; changing the URL alone does not enable TLS.
 
 With certificates configured, HTTP requests on the same panel port redirect to HTTPS, preserving the port, path, query and browser-side `#/…` route. Unencrypted requests never reach the panel API. Without certificates, HTTP remains available. Restart h-ui after certificate renewal to load the renewed certificate.
+
+## Loon subscriptions
+
+Requests coming from Loon (`User-Agent: Loon/…`) receive a plain text `[Proxy]` section instead of Clash YAML, and the subscription URL shown as a QR code can be added to Loon directly.
+
+REALITY nodes are emitted with `tls-profile=chrome147` (a Safari or iOS fingerprint maps to `safari-ios-26`), the MLKEM capable TLS ClientHello profiles, because a REALITY server built on Xray v26.9.9 or newer silently rejects handshakes that do not offer X25519MLKEM768. Set the optional VLESS `loonTlsProfile` field to `chrome`, `chrome147`, `safari-ios18`, `safari-ios-26`, `default` or `global` to override the profile. gRPC transports are not supported by Loon and are reported as an error instead of producing a node that silently fails.
 
 ## Default Installation Information
 
