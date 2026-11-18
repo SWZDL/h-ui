@@ -2,28 +2,49 @@ package service
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/sirupsen/logrus"
-	"h-ui/util"
+	"net"
 	"net/http"
 	"time"
+
+	"github.com/sirupsen/logrus"
+	"h-ui/util"
 )
 
 var server *http.Server
 
 func InitServer(addr string, handler http.Handler) {
 	server = &http.Server{
-		Addr:    addr,
-		Handler: handler,
+		Addr:              addr,
+		Handler:           handler,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 }
 
 func StartServer(crtPath string, keyPath string) error {
-	if crtPath != "" && keyPath != "" {
-		return server.ListenAndServeTLS(crtPath, keyPath)
+	if crtPath == "" && keyPath == "" {
+		return server.ListenAndServe()
 	}
-	return server.ListenAndServe()
+	if crtPath == "" || keyPath == "" {
+		return errors.New("HTTPS requires both a certificate and a private key")
+	}
+	certificate, err := tls.LoadX509KeyPair(crtPath, keyPath)
+	if err != nil {
+		return fmt.Errorf("load panel HTTPS certificate: %w", err)
+	}
+	server.TLSConfig = &tls.Config{
+		Certificates: []tls.Certificate{certificate},
+		MinVersion:   tls.VersionTLS12,
+		NextProtos:   []string{"h2", "http/1.1"},
+	}
+	server.Handler = redirectPlainHTTP(server.Handler)
+	listener, err := net.Listen("tcp", server.Addr)
+	if err != nil {
+		return err
+	}
+	return server.Serve(newHTTPSListener(listener, server.TLSConfig))
 }
 
 func StopServer() error {

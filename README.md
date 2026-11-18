@@ -150,6 +150,12 @@ docker rmi ghcr.io/swzdl/h-ui
 rm -rf /h-ui
 ```
 
+## Panel HTTPS
+
+Enable HTTPS in System settings and supply both the server's full certificate chain (for example, `fullchain.pem`) and private key (`privkey.pem`). After saving, visit `https://your-domain:panel-port/`. The certificate must cover that domain; changing the URL alone does not enable TLS.
+
+With certificates configured, HTTP requests on the same panel port redirect to HTTPS, preserving the port, path, query and browser-side `#/…` route. Unencrypted requests never reach the panel API. Without certificates, HTTP remains available. Restart h-ui after certificate renewal to load the renewed certificate.
+
 ## Default Installation Information
 
 - Panel Port: 8081
