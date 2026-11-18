@@ -46,8 +46,8 @@ export default {
     confirm: "Подтвердить",
     cancel: "Отмена",
     copySuccess: "Скопировано",
-    subscribe: "Подписка",
-    subscribeQrCode: "QR-код подписки",
+    subscribe: "Подписка всех протоколов",
+    subscribeQrCode: "QR-код подписки всех протоколов",
     nodeUrl: "URL узла",
     nodeQrCode: "QR-код узла",
     vlessSubscribe: "Подписка VLESS",
@@ -159,7 +159,6 @@ export default {
   },
   vless: {
     title: "Управление VLESS",
-    externalServerTip: "Xray должен быть установлен на этом сервере. h-ui настроит локальный API, синхронизирует UUID, учтёт трафик и применит квоты и лимит устройств. Активные соединения могут работать до отключения; пользователи Xray, не созданные h-ui, не управляются панелью.",
     xrayManagement: "Управление аккаунтами Xray",
     xrayManagementDescription: "h-ui изменяет конфигурацию Xray и при необходимости перезапускает службу, управляя аккаунтами панели через локальный API. API должен слушать loopback; остальные пользователи Xray не изменяются.",
     xrayConfigPath: "Файл конфигурации Xray",

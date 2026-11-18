@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"gopkg.in/yaml.v3"
 	"h-ui/model/bo"
 	"h-ui/model/entity"
 )
@@ -71,6 +72,48 @@ func TestBuildVlessWebsocketURL(t *testing.T) {
 	}
 	if parsed.Query().Get("path") != "/tunnel" || parsed.Query().Get("host") != "ws.example.com" {
 		t.Fatalf("WebSocket parameters missing from VLESS URL: %s", parsed.String())
+	}
+}
+
+func TestMergeClashSubscriptionsIncludesBothProtocols(t *testing.T) {
+	hysteria2 := `proxies:
+  - name: H2
+    type: hysteria2
+proxy-groups:
+  - name: PROXY
+    type: select
+    proxies:
+      - H2
+`
+	vless, err := BuildVlessClashSubscription(bo.VlessConfig{
+		Address: "vless.example.com", Port: 443, Network: "tcp", Security: "tls",
+	}, "11111111-1111-4111-8111-111111111111", "alice", "")
+	if err != nil {
+		t.Fatalf("build VLESS Clash subscription: %v", err)
+	}
+	combined, err := mergeClashSubscriptions(hysteria2, vless)
+	if err != nil {
+		t.Fatalf("merge Clash subscriptions: %v", err)
+	}
+	var parsed struct {
+		Proxies []map[string]interface{} `yaml:"proxies"`
+		Groups  []struct {
+			Name    string   `yaml:"name"`
+			Proxies []string `yaml:"proxies"`
+		} `yaml:"proxy-groups"`
+	}
+	if err := yaml.Unmarshal([]byte(combined), &parsed); err != nil {
+		t.Fatalf("parse merged Clash subscription: %v", err)
+	}
+	if len(parsed.Proxies) != 2 || len(parsed.Groups) != 1 || len(parsed.Groups[0].Proxies) != 2 {
+		t.Fatalf("merged subscription should contain both proxies in one group: %s", combined)
+	}
+	proxyTypes := map[string]bool{}
+	for _, proxy := range parsed.Proxies {
+		proxyTypes[proxy["type"].(string)] = true
+	}
+	if !proxyTypes["hysteria2"] || !proxyTypes["vless"] {
+		t.Fatalf("combined subscription missing protocol proxy types: %#v", proxyTypes)
 	}
 }
 

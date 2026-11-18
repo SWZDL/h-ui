@@ -1,6 +1,5 @@
 <template>
   <div class="app-container">
-    <el-alert :title="$t('vless.externalServerTip')" type="info" :closable="false" class="mb-4" />
     <el-card shadow="never" class="mb-4">
       <template #header>{{ $t("vless.serviceManagement") }}</template>
       <el-alert :title="$t('vless.serviceImpactNotice')" type="warning" :closable="false" class="mb-4" />

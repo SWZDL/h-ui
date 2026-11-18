@@ -195,9 +195,6 @@ export function VlessPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title={t("vless.title")} description={t("vless.description")} />
-      <Alert>
-        <AlertDescription>{t("vless.externalServerTip")}</AlertDescription>
-      </Alert>
       <Card>
         <CardHeader>
           <CardTitle>{t("vless.serviceManagement")}</CardTitle>

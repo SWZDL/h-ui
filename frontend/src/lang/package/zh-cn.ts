@@ -46,8 +46,8 @@ export default {
     confirm: "确定",
     cancel: "取消",
     copySuccess: "复制成功",
-    subscribe: "订阅链接",
-    subscribeQrCode: "订阅二维码",
+    subscribe: "多协议订阅链接",
+    subscribeQrCode: "多协议订阅二维码",
     nodeUrl: "节点 URL",
     nodeQrCode: "节点二维码",
     vlessSubscribe: "VLESS 订阅链接",
@@ -156,7 +156,6 @@ export default {
   },
   vless: {
     title: "VLESS 管理",
-    externalServerTip: "需在本机安装 Xray。h-ui 会配置本地 API、同步账户 UUID、统计流量并执行配额与设备数限制。已建立的连接可能持续到主动断开；非 h-ui 创建的 Xray 用户不受管理。",
     xrayManagement: "Xray 账户管理",
     xrayManagementDescription: "h-ui 会按需更新 Xray 配置并重启服务，通过本地 API 管理面板账户。API 地址必须使用回环地址；其他 Xray 用户不会被修改。",
     xrayConfigPath: "Xray 配置文件",

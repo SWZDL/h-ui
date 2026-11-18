@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"gopkg.in/yaml.v3"
@@ -115,6 +116,10 @@ func Hysteria2SubscribeUrl(accountId int64, protocol string, host string) (strin
 }
 
 func Hysteria2Subscribe(conPass string, clientType string, host string) (string, string, error) {
+	return hysteria2Subscribe(conPass, clientType, host, true)
+}
+
+func hysteria2Subscribe(conPass string, clientType string, host string, includeClashExtension bool) (string, string, error) {
 	hysteria2Config, err := GetHysteria2Config()
 	if err != nil {
 		return "", "", err
@@ -210,7 +215,7 @@ func Hysteria2Subscribe(conPass string, clientType string, host string) (string,
 			return "", "", err
 		}
 		configStr = string(clashConfigYaml)
-		if clientType == constant.Clash {
+		if clientType == constant.Clash && includeClashExtension {
 			clashExtension, err := GetConfig(constant.ClashExtension)
 			if err != nil {
 				return "", "", err
@@ -228,6 +233,89 @@ func Hysteria2Subscribe(conPass string, clientType string, host string) (string,
 	}
 
 	return userInfo, configStr, nil
+}
+
+// ProxySubscribe returns a subscription containing every enabled protocol for
+// the account. Hysteria2-only configurations retain their existing format.
+func ProxySubscribe(conPass string, clientType string, host string) (string, string, error) {
+	vlessProfile, err := GetVlessConfig()
+	if err != nil || !vlessProfile.Enabled {
+		if clientType == constant.NekoBox {
+			clientType = constant.V2rayN
+		}
+		return Hysteria2Subscribe(conPass, clientType, host)
+	}
+
+	if clientType == constant.V2rayN || clientType == constant.NekoBox {
+		userInfo, hysteria2URL, err := Hysteria2Subscribe(conPass, constant.V2rayN, host)
+		if err != nil {
+			return "", "", err
+		}
+		_, encodedVlessURL, err := VlessSubscribe(conPass, "")
+		if err != nil {
+			return "", "", err
+		}
+		vlessURL, err := base64.StdEncoding.DecodeString(strings.TrimSpace(encodedVlessURL))
+		if err != nil {
+			return "", "", fmt.Errorf("decode VLESS subscription: %w", err)
+		}
+		return userInfo, strings.Join([]string{strings.TrimSpace(hysteria2URL), strings.TrimSpace(string(vlessURL))}, "\n"), nil
+	}
+
+	if clientType != constant.Shadowrocket && clientType != constant.Clash {
+		clientType = constant.Clash
+	}
+	userInfo, hysteria2Config, err := hysteria2Subscribe(conPass, clientType, host, false)
+	if err != nil {
+		return "", "", err
+	}
+	_, vlessYAML, err := VlessSubscribe(conPass, constant.Clash)
+	if err != nil {
+		return "", "", err
+	}
+	combined, err := mergeClashSubscriptions(hysteria2Config, vlessYAML)
+	if err != nil {
+		return "", "", err
+	}
+	if clientType == constant.Clash {
+		extension, err := GetConfig(constant.ClashExtension)
+		if err != nil {
+			return "", "", err
+		}
+		if extension.Value != nil && *extension.Value != "" {
+			combined += *extension.Value
+		}
+	}
+	return userInfo, combined, nil
+}
+
+func mergeClashSubscriptions(first string, second string) (string, error) {
+	var combined, additional bo.ClashConfig
+	if err := yaml.Unmarshal([]byte(first), &combined); err != nil {
+		return "", fmt.Errorf("parse Hysteria2 Clash subscription: %w", err)
+	}
+	if err := yaml.Unmarshal([]byte(second), &additional); err != nil {
+		return "", fmt.Errorf("parse VLESS Clash subscription: %w", err)
+	}
+	combined.Proxies = append(combined.Proxies, additional.Proxies...)
+	for _, next := range additional.ProxyGroups {
+		merged := false
+		for index := range combined.ProxyGroups {
+			if combined.ProxyGroups[index].Name == next.Name && combined.ProxyGroups[index].Type == next.Type {
+				combined.ProxyGroups[index].Proxies = append(combined.ProxyGroups[index].Proxies, next.Proxies...)
+				merged = true
+				break
+			}
+		}
+		if !merged {
+			combined.ProxyGroups = append(combined.ProxyGroups, next)
+		}
+	}
+	content, err := yaml.Marshal(&combined)
+	if err != nil {
+		return "", fmt.Errorf("encode combined Clash subscription: %w", err)
+	}
+	return string(content), nil
 }
 
 func Hysteria2Url(accountId int64, hostname string) (string, error) {

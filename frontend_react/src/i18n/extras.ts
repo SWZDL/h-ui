@@ -169,7 +169,6 @@ export const extras = {
     vless: {
       title: "VLESS",
       description: "Configure the VLESS inbound, account links, and subscriptions.",
-      externalServerTip: "Xray must be installed on this host. h-ui configures its local API, provisions account UUIDs, records traffic, and enforces quotas and device limits. Existing active sessions may continue until they disconnect; Xray clients not provisioned by h-ui remain unmanaged.",
       xrayManagement: "Xray account management",
       xrayManagementDescription: "h-ui updates the Xray config, restarts the service when needed, and manages panel accounts through the local API. The API address must use loopback; other Xray users are left untouched.",
       xrayConfigPath: "Xray config file",
@@ -515,7 +514,6 @@ export const extras = {
     vless: {
       title: "VLESS 管理",
       description: "配置 VLESS 入站、账户节点和订阅。",
-      externalServerTip: "需在本机安装 Xray。h-ui 会配置本地 API、同步账户 UUID、统计流量并执行配额与设备数限制。已建立的连接可能持续到主动断开；非 h-ui 创建的 Xray 用户不受管理。",
       xrayManagement: "Xray 账户管理",
       xrayManagementDescription: "h-ui 会按需更新 Xray 配置并重启服务，通过本地 API 管理面板账户。API 地址必须使用回环地址；其他 Xray 用户不会被修改。",
       xrayConfigPath: "Xray 配置文件",
@@ -853,7 +851,6 @@ export const extras = {
     vless: {
       title: "Управление VLESS",
       description: "Настройка входящего подключения VLESS, ссылок и подписок аккаунтов.",
-      externalServerTip: "Xray должен быть установлен на этом сервере. h-ui настроит локальный API, синхронизирует UUID, учтёт трафик и применит квоты и лимит устройств. Активные соединения могут работать до отключения; пользователи Xray, не созданные h-ui, не управляются панелью.",
       xrayManagement: "Управление аккаунтами Xray",
       xrayManagementDescription: "h-ui изменяет конфигурацию Xray и при необходимости перезапускает службу, управляя аккаунтами панели через локальный API. API должен слушать loopback; остальные пользователи Xray не изменяются.",
       xrayConfigPath: "Файл конфигурации Xray",

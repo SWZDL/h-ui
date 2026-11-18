@@ -46,8 +46,8 @@ export default {
     confirm: "Confirm",
     cancel: "Cancel",
     copySuccess: "Copy successful",
-    subscribe: "Subscribe",
-    subscribeQrCode: "Subscribe QR Code",
+    subscribe: "All-protocol subscription",
+    subscribeQrCode: "All-protocol subscription QR",
     nodeUrl: "Node URL",
     nodeQrCode: "Node QR Code",
     vlessSubscribe: "VLESS Subscription",
@@ -157,7 +157,6 @@ export default {
   },
   vless: {
     title: "VLESS Management",
-    externalServerTip: "Xray must be installed on this host. h-ui configures its local API, provisions account UUIDs, records traffic, and enforces quotas and device limits. Existing sessions may continue until disconnect; Xray clients not provisioned by h-ui remain unmanaged.",
     xrayManagement: "Xray account management",
     xrayManagementDescription: "h-ui updates the Xray config, restarts the service when needed, and manages panel accounts through the local API. The API address must use loopback; other Xray users are left untouched.",
     xrayConfigPath: "Xray config file",

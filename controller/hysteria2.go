@@ -196,7 +196,7 @@ func Hysteria2Subscribe(c *gin.Context) {
 		clientType = constant.Clash
 	}
 
-	userInfo, configStr, err := service.Hysteria2Subscribe(conPass, clientType, host)
+	userInfo, configStr, err := service.ProxySubscribe(conPass, clientType, host)
 	if err != nil {
 		vo.Fail(err.Error(), c)
 		return
@@ -206,7 +206,7 @@ func Hysteria2Subscribe(c *gin.Context) {
 		c.Header("content-disposition", "attachment; filename=hui.yaml")
 		c.Header("profile-update-interval", "12")
 		c.Header("subscription-userinfo", userInfo)
-	} else if clientType == constant.V2rayN {
+	} else if clientType == constant.V2rayN || clientType == constant.NekoBox {
 		configStr = base64.StdEncoding.EncodeToString([]byte(configStr))
 	}
 
