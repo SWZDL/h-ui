@@ -18,6 +18,11 @@ func InitCron() error {
 		logrus.Errorf("cron add func CronHandleAccount err: %v", err)
 		return errors.New("cron add func CronHandleAccount err")
 	}
+	_, err = c.AddFunc("@every 5s", service.CronHandleVless)
+	if err != nil {
+		logrus.Errorf("cron add func CronHandleVless err: %v", err)
+		return errors.New("cron add func CronHandleVless err")
+	}
 	resetTrafficCron, err := dao.GetConfig("key = ?", constant.ResetTrafficCron)
 	if err != nil {
 		return err

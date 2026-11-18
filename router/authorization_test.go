@@ -2,6 +2,7 @@ package router_test
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"h-ui/dao"
+	"h-ui/model/constant"
 	"h-ui/model/entity"
 	"h-ui/router"
 	"h-ui/util"
@@ -157,6 +159,14 @@ func TestRegularAccountCanOnlyReadItself(t *testing.T) {
 	if foreignSub.Code != 50403 {
 		t.Fatalf("foreign subscribe url: want 50403, got code=%d message=%s", foreignSub.Code, foreignSub.Message)
 	}
+	foreignVlessUrl := call(t, engine, http.MethodGet, "/hui/vless/vlessUrl?accountId=1", userToken, nil)
+	if foreignVlessUrl.Code != 50403 {
+		t.Fatalf("foreign VLESS node url: want 50403, got code=%d message=%s", foreignVlessUrl.Code, foreignVlessUrl.Message)
+	}
+	foreignVlessSub := call(t, engine, http.MethodGet, "/hui/vless/vlessSubscribeUrl?accountId=1&protocol=http&host=localhost", userToken, nil)
+	if foreignVlessSub.Code != 50403 {
+		t.Fatalf("foreign VLESS subscription url: want 50403, got code=%d message=%s", foreignVlessSub.Code, foreignVlessSub.Message)
+	}
 }
 
 func TestRegularAccountCannotUseAdminEndpoints(t *testing.T) {
@@ -176,6 +186,8 @@ func TestRegularAccountCannotUseAdminEndpoints(t *testing.T) {
 		}},
 		{http.MethodPost, "/hui/account/deleteAccount", map[string]any{"id": 1}},
 		{http.MethodGet, "/hui/config/getConfig", nil},
+		{http.MethodGet, "/hui/vless/getVlessConfig", nil},
+		{http.MethodPost, "/hui/vless/updateVlessConfig", map[string]any{"enabled": false}},
 		{http.MethodGet, "/hui/log/logSystem", nil},
 	}
 	for _, item := range paths {
@@ -218,6 +230,39 @@ func TestAdminKeepsFullAccess(t *testing.T) {
 	user := call(t, engine, http.MethodGet, "/hui/account/getAccount?id=2", adminToken, nil)
 	if user.Code != 20000 || !strings.Contains(string(user.Data), `"testuser"`) {
 		t.Fatalf("admin read other account: code=%d data=%s message=%s", user.Code, user.Data, user.Message)
+	}
+	config := call(t, engine, http.MethodGet, "/hui/vless/getVlessConfig", adminToken, nil)
+	if config.Code != 20000 || !strings.Contains(string(config.Data), `"enabled":false`) {
+		t.Fatalf("admin read VLESS config: code=%d data=%s message=%s", config.Code, config.Data, config.Message)
+	}
+	updated := call(t, engine, http.MethodPost, "/hui/vless/updateVlessConfig", adminToken, map[string]any{
+		"enabled": false, "address": "vless.example.com", "port": 443, "network": "tcp", "security": "tls",
+		"remark": "test", "sni": "vless.example.com", "fingerprint": "chrome", "alpn": []string{},
+	})
+	if updated.Code != 20000 {
+		t.Fatalf("admin update VLESS config: code=%d message=%s", updated.Code, updated.Message)
+	}
+	// Link generation is tested without requiring a local Xray daemon; enabling
+	// Xray management is covered separately by the proxy/config tests.
+	configJSON, _ := json.Marshal(map[string]any{
+		"enabled": true, "address": "vless.example.com", "port": 443, "network": "tcp", "security": "tls",
+		"remark": "test", "sni": "vless.example.com", "fingerprint": "chrome", "alpn": []string{},
+	})
+	if err := dao.UpdateConfig([]string{constant.VlessConfig}, map[string]interface{}{"value": string(configJSON)}); err != nil {
+		t.Fatalf("set VLESS profile for link assertions: %v", err)
+	}
+	node := call(t, engine, http.MethodGet, "/hui/vless/vlessUrl?accountId=2", adminToken, nil)
+	if node.Code != 20000 || !strings.Contains(string(node.Data), "vless://") {
+		t.Fatalf("admin create VLESS node URL: code=%d data=%s message=%s", node.Code, node.Data, node.Message)
+	}
+
+	request := httptest.NewRequest(http.MethodGet, "/hui/vless/subscribe/testuser.userpass", nil)
+	request.Header.Set("User-Agent", "v2rayN")
+	response := httptest.NewRecorder()
+	engine.ServeHTTP(response, request)
+	decoded, err := base64.StdEncoding.DecodeString(strings.TrimSpace(response.Body.String()))
+	if err != nil || !strings.Contains(string(decoded), "vless://") {
+		t.Fatalf("VLESS subscription response is not a Base64 URI: status=%d body=%q err=%v", response.Code, response.Body.String(), err)
 	}
 }
 

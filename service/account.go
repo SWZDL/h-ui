@@ -124,6 +124,7 @@ func ListExportAccount() ([]bo.AccountExport, error) {
 			Username:     *item.Username,
 			Pass:         *item.Pass,
 			ConPass:      *item.ConPass,
+			VlessUUID:    *item.VlessUUID,
 			Quota:        *item.Quota,
 			Download:     *item.Download,
 			Upload:       *item.Upload,

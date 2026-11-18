@@ -33,6 +33,9 @@ func runServer(port string, webFrontend string) error {
 	if err := service.InitHysteria2(); err != nil {
 		return err
 	}
+	if err := service.InitVless(); err != nil {
+		logrus.Warnf("init VLESS/Xray management failed: %v", err)
+	}
 	if err := service.InitTableAndChain(); err != nil {
 		logrus.Errorf(err.Error())
 	}

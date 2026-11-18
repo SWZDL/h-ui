@@ -3,6 +3,7 @@ package dao
 import (
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -13,6 +14,7 @@ import (
 )
 
 func SaveAccount(account entity.Account) (int64, error) {
+	ensureVlessUUID(&account)
 	if tx := sqliteDB.Save(&account); tx.Error != nil {
 		logrus.Errorf("%v", tx.Error)
 		return 0, errors.New(constant.SysError)
@@ -42,9 +44,15 @@ func UpdateAccount(ids []int64, updates map[string]interface{}) error {
 }
 
 func UpsertAccount(accounts []entity.Account) error {
+	for i := range accounts {
+		if accounts[i].VlessUUID == nil || *accounts[i].VlessUUID == "" {
+			uuidValue := uuid.NewString()
+			accounts[i].VlessUUID = &uuidValue
+		}
+	}
 	if tx := sqliteDB.Model(&entity.Account{}).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "username"}},
-		DoUpdates: clause.AssignmentColumns([]string{"pass", "con_pass", "quota", "download", "upload", "expire_time", "kick_util_time", "device_no", "role", "deleted", "create_time", "update_time", "login_at", "con_at", "remark"}),
+		DoUpdates: clause.AssignmentColumns([]string{"pass", "con_pass", "vless_uuid", "quota", "download", "upload", "expire_time", "kick_util_time", "device_no", "role", "deleted", "create_time", "update_time", "login_at", "con_at", "remark"}),
 	}).Create(accounts); tx.Error != nil {
 		logrus.Errorf("%v", tx.Error)
 		return errors.New(constant.SysError)
@@ -82,7 +90,19 @@ func GetAccount(query interface{}, args ...interface{}) (entity.Account, error) 
 		logrus.Errorf("%v", tx.Error)
 		return account, errors.New(constant.SysError)
 	}
+	ensureVlessUUID(&account)
 	return account, nil
+}
+
+func ensureVlessUUID(account *entity.Account) {
+	if account == nil || account.VlessUUID != nil && *account.VlessUUID != "" {
+		return
+	}
+	uuidValue := uuid.NewString()
+	account.VlessUUID = &uuidValue
+	if account.Id != nil && *account.Id > 0 {
+		_ = sqliteDB.Model(&entity.Account{}).Where("id = ?", *account.Id).Update("vless_uuid", uuidValue).Error
+	}
 }
 
 func PageAccount(accountPageDto dto.AccountPageDto) ([]entity.Account, int64, error) {
@@ -114,6 +134,9 @@ func ListAccount(query interface{}, args ...interface{}) ([]entity.Account, erro
 		Where(query, args...).Order("role,create_time desc").Find(&accounts); tx.Error != nil {
 		logrus.Errorf("%v", tx.Error)
 		return accounts, errors.New(constant.SysError)
+	}
+	for i := range accounts {
+		ensureVlessUUID(&accounts[i])
 	}
 	return accounts, nil
 }

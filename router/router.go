@@ -36,6 +36,7 @@ func Router(router *gin.Engine, huiWebContext *string, webFrontend string) {
 		{
 			initAuthRouter(authApi)
 			initHysteria2AuthRouter(authApi)
+			initVlessAuthRouter(authApi)
 		}
 
 		globalGroup.Use(middleware.JWTHandler())
@@ -46,6 +47,7 @@ func Router(router *gin.Engine, huiWebContext *string, webFrontend string) {
 		{
 			initAccountUserRouter(huiUserApi)
 			initHysteria2UserRouter(huiUserApi)
+			initVlessUserRouter(huiUserApi)
 			// Host and service health is shown on the overview page, which every
 			// account can open, so monitoring is not an administrative endpoint.
 			initMonitorRouter(huiUserApi)
@@ -58,6 +60,7 @@ func Router(router *gin.Engine, huiWebContext *string, webFrontend string) {
 			initAccountAdminRouter(huiAdminApi)
 			initConfigRouter(huiAdminApi)
 			initHysteria2Router(huiAdminApi)
+			initVlessAdminRouter(huiAdminApi)
 			initLogRouter(huiAdminApi)
 		}
 	}

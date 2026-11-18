@@ -57,8 +57,8 @@ func Hysteria2Online() (map[string]int64, error) {
 }
 
 func Hysteria2Kick(ids []int64, kickUtilTime int64) error {
-	if !Hysteria2IsRunning() {
-		return errors.New("hysteria2 is not running")
+	if len(ids) == 0 {
+		return nil
 	}
 	if err := dao.UpdateAccount(ids, map[string]interface{}{"kick_util_time": kickUtilTime}); err != nil {
 		return err
@@ -68,22 +68,34 @@ func Hysteria2Kick(ids []int64, kickUtilTime int64) error {
 	if err != nil {
 		return err
 	}
-	var keys []string
-	for _, item := range accounts {
-		keys = append(keys, *item.Username)
+	var hysteriaErr error
+	if Hysteria2IsRunning() {
+		keys := make([]string, 0, len(accounts))
+		for _, item := range accounts {
+			keys = append(keys, *item.Username)
+		}
+		apiPort, apiErr := GetHysteria2ApiPort()
+		if apiErr == nil {
+			jwtSecretConfig, secretErr := dao.GetConfig("key = ?", constant.JwtSecret)
+			apiErr = secretErr
+			if apiErr == nil {
+				apiErr = proxy.NewHysteria2Api(apiPort).KickUsers(keys, *jwtSecretConfig.Value)
+			}
+		}
+		hysteriaErr = apiErr
 	}
-	apiPort, err := GetHysteria2ApiPort()
-	if err != nil {
-		return errors.New("get hysteria2 apiPort err")
+
+	if config, configErr := GetVlessConfig(); configErr == nil && config.Enabled {
+		emails := make([]string, 0, len(accounts))
+		for _, item := range accounts {
+			emails = append(emails, fmt.Sprintf("%s%d", proxy.ManagedXrayEmailPrefix, *item.Id))
+		}
+		if err := proxy.NewXrayAPI(config).RemoveUsers(emails); err != nil {
+			return err
+		}
+		return nil
 	}
-	jwtSecretConfig, err := dao.GetConfig("key = ?", constant.JwtSecret)
-	if err != nil {
-		return err
-	}
-	if err = proxy.NewHysteria2Api(apiPort).KickUsers(keys, *jwtSecretConfig.Value); err != nil {
-		return err
-	}
-	return nil
+	return hysteriaErr
 }
 
 func Hysteria2SubscribeUrl(accountId int64, protocol string, host string) (string, error) {
