@@ -342,6 +342,7 @@ type clashVlessProxy struct {
 	Server            string            `yaml:"server"`
 	Port              int               `yaml:"port"`
 	UUID              string            `yaml:"uuid"`
+	Network           string            `yaml:"network,omitempty"`
 	TLS               bool              `yaml:"tls,omitempty"`
 	ServerName        string            `yaml:"servername,omitempty"`
 	ClientFingerprint string            `yaml:"client-fingerprint,omitempty"`
@@ -392,6 +393,7 @@ func buildClashVlessConfigForAccount(config bo.VlessConfig, uuid string, usernam
 		Server:         strings.Trim(strings.TrimSpace(config.Address), "[]"),
 		Port:           config.Port,
 		UUID:           uuid,
+		Network:        config.Network,
 		TLS:            config.Security != "none",
 		Flow:           config.Flow,
 		SkipCertVerify: config.Security == "tls" && config.AllowInsecure,

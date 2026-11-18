@@ -297,7 +297,7 @@ func TestCombinedSubscriptionIncludesVlessAndHysteria2(t *testing.T) {
 		}
 		content := response.Body.String()
 		if userAgent == "Clash" {
-			if !strings.Contains(content, "type: hysteria2") || !strings.Contains(content, "type: vless") {
+			if !strings.Contains(content, "type: hysteria2") || !strings.Contains(content, "type: vless") || !strings.Contains(content, "network: tcp") {
 				t.Fatalf("Clash subscription missing a protocol: %s", content)
 			}
 			continue
