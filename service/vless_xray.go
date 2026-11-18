@@ -16,6 +16,13 @@ import (
 var vlessSyncMutex sync.Mutex
 var lastVlessSyncWarning time.Time
 
+// Xray clients without an email cannot be billed, and they cannot be removed
+// through the API either, so the service is restarted to apply the normalized
+// config. The interval keeps that restart from looping.
+const vlessClientCleanupInterval = 5 * time.Minute
+
+var lastVlessClientCleanup time.Time
+
 // InitVless prepares the local Xray API and brings managed users in sync with
 // the account database. Runtime traffic and device enforcement is handled by
 // CronHandleVless.
@@ -183,6 +190,44 @@ func CronHandleVless() {
 			return
 		}
 	}
+
+	// Persist the billable client list so a restart cannot resurrect a client
+	// that is not billed, and drop live clients that have no h-ui email: the
+	// traffic query is keyed by email, so those sessions would stay free.
+	if _, err := proxy.SyncInboundClients(config, vlessInboundClients(accounts, config)); err != nil {
+		warnVlessSync("persist inbound clients", err)
+	}
+	anonymous := 0
+	for email := range current {
+		if !strings.HasPrefix(email, proxy.ManagedXrayEmailPrefix) {
+			anonymous++
+		}
+	}
+	if anonymous > 0 && time.Since(lastVlessClientCleanup) >= vlessClientCleanupInterval {
+		lastVlessClientCleanup = time.Now()
+		logrus.Warnf("VLESS/Xray found %d client(s) without an h-ui email; restarting Xray to stop unbilled usage", anonymous)
+		if err := proxy.ControlXrayService(config, "restart"); err != nil {
+			warnVlessSync("restart Xray service to drop unbilled clients", err)
+		}
+	}
+}
+
+// vlessInboundClients lists the accounts allowed to connect right now, in the
+// shape the Xray config stores them, so every static client stays billable.
+func vlessInboundClients(accounts []entity.Account, config bo.VlessConfig) []proxy.XrayInboundClient {
+	now := time.Now().UnixMilli()
+	clients := make([]proxy.XrayInboundClient, 0, len(accounts))
+	for _, account := range accounts {
+		if !vlessAccountAllowed(account, now) {
+			continue
+		}
+		clients = append(clients, proxy.XrayInboundClient{
+			UUID:  valueOrEmpty(account.VlessUUID),
+			Email: vlessXrayEmail(account),
+			Flow:  config.Flow,
+		})
+	}
+	return clients
 }
 
 func vlessXrayEmail(account entity.Account) string {

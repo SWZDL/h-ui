@@ -132,54 +132,7 @@ func ConfigureXrayAPI(config bo.VlessConfig) error {
 		return waitForXrayAPI(config, 20*time.Second)
 	}
 
-	updated, err := json.MarshalIndent(root, "", "  ")
-	if err != nil {
-		return fmt.Errorf("marshal Xray config: %w", err)
-	}
-	updated = append(updated, '\n')
-
-	backupPath := configPath + ".bak-h-ui-" + time.Now().Format("20060102150405")
-	if err := copyFileWithMode(configPath, backupPath, fileInfo.Mode().Perm(), fileInfo); err != nil {
-		return fmt.Errorf("backup Xray config: %w", err)
-	}
-	tmp, err := os.CreateTemp(filepath.Dir(configPath), ".xray-config-*.json")
-	if err != nil {
-		return err
-	}
-	tmpPath := tmp.Name()
-	defer os.Remove(tmpPath)
-	if _, err = tmp.Write(updated); err == nil {
-		err = tmp.Sync()
-	}
-	if closeErr := tmp.Close(); err == nil {
-		err = closeErr
-	}
-	if err != nil {
-		return fmt.Errorf("write Xray config: %w", err)
-	}
-	if err = os.Chmod(tmpPath, fileInfo.Mode().Perm()); err != nil {
-		return err
-	}
-	if os.Geteuid() == 0 {
-		if owner, ok := fileOwner(fileInfo); ok {
-			_ = os.Chown(tmpPath, owner.uid, owner.gid)
-		}
-	}
-
-	if _, err = runXrayCommand(config.XrayBinaryPath, "run", "-test", "-config", tmpPath); err != nil {
-		return fmt.Errorf("validate Xray config: %w", err)
-	}
-	if err = os.Rename(tmpPath, configPath); err != nil {
-		return fmt.Errorf("install Xray config: %w", err)
-	}
-	if _, err = exec.Command("systemctl", "restart", config.XrayServiceName).CombinedOutput(); err != nil {
-		_ = restoreFile(configPath, original, fileInfo)
-		_, _ = exec.Command("systemctl", "restart", config.XrayServiceName).CombinedOutput()
-		return fmt.Errorf("restart Xray service: %w", err)
-	}
-	if err = waitForXrayAPI(config, 20*time.Second); err != nil {
-		_ = restoreFile(configPath, original, fileInfo)
-		_, _ = exec.Command("systemctl", "restart", config.XrayServiceName).CombinedOutput()
+	if err := writeXrayConfig(config, configPath, original, fileInfo, root, true); err != nil {
 		return err
 	}
 	return nil
@@ -523,9 +476,9 @@ func (x *XrayAPI) InboundUsers() (map[string]XrayInboundUser, error) {
 	}
 	users := make(map[string]XrayInboundUser, len(response.Users))
 	for _, user := range response.Users {
-		if user.Email != "" {
-			users[user.Email] = XrayInboundUser{UUID: user.Account.ID, Flow: user.Account.Flow}
-		}
+		// Clients without an email stay visible under the empty key: they are
+		// invisible to the stats query, so the reconciler has to detect them.
+		users[user.Email] = XrayInboundUser{UUID: user.Account.ID, Flow: user.Account.Flow}
 	}
 	return users, nil
 }
@@ -592,3 +545,61 @@ func (x *XrayAPI) RemoveUsers(emails []string) error {
 }
 
 func (x *XrayAPI) Port() int { return x.port }
+
+// writeXrayConfig validates a rewritten config and installs it atomically. The
+// previous file is restored when the service cannot come back up.
+func writeXrayConfig(config bo.VlessConfig, configPath string, original []byte, fileInfo os.FileInfo, root map[string]interface{}, restart bool) error {
+	updated, err := json.MarshalIndent(root, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshal Xray config: %w", err)
+	}
+	updated = append(updated, '\n')
+
+	backupPath := configPath + ".bak-h-ui-" + time.Now().Format("20060102150405")
+	if err := copyFileWithMode(configPath, backupPath, fileInfo.Mode().Perm(), fileInfo); err != nil {
+		return fmt.Errorf("backup Xray config: %w", err)
+	}
+	tmp, err := os.CreateTemp(filepath.Dir(configPath), ".xray-config-*.json")
+	if err != nil {
+		return err
+	}
+	tmpPath := tmp.Name()
+	defer os.Remove(tmpPath)
+	if _, err = tmp.Write(updated); err == nil {
+		err = tmp.Sync()
+	}
+	if closeErr := tmp.Close(); err == nil {
+		err = closeErr
+	}
+	if err != nil {
+		return fmt.Errorf("write Xray config: %w", err)
+	}
+	if err = os.Chmod(tmpPath, fileInfo.Mode().Perm()); err != nil {
+		return err
+	}
+	if os.Geteuid() == 0 {
+		if owner, ok := fileOwner(fileInfo); ok {
+			_ = os.Chown(tmpPath, owner.uid, owner.gid)
+		}
+	}
+	if _, err = runXrayCommand(config.XrayBinaryPath, "run", "-test", "-config", tmpPath); err != nil {
+		return fmt.Errorf("validate Xray config: %w", err)
+	}
+	if err = os.Rename(tmpPath, configPath); err != nil {
+		return fmt.Errorf("install Xray config: %w", err)
+	}
+	if !restart {
+		return nil
+	}
+	if _, err = exec.Command("systemctl", "restart", config.XrayServiceName).CombinedOutput(); err != nil {
+		_ = restoreFile(configPath, original, fileInfo)
+		_, _ = exec.Command("systemctl", "restart", config.XrayServiceName).CombinedOutput()
+		return fmt.Errorf("restart Xray service: %w", err)
+	}
+	if err = waitForXrayAPI(config, 20*time.Second); err != nil {
+		_ = restoreFile(configPath, original, fileInfo)
+		_, _ = exec.Command("systemctl", "restart", config.XrayServiceName).CombinedOutput()
+		return err
+	}
+	return nil
+}
