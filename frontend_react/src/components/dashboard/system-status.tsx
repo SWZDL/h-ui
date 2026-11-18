@@ -2,7 +2,6 @@ import {
   CpuIcon,
   RefreshCwIcon,
   RocketIcon,
-  ShieldAlertIcon,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { monitorHysteria2Api, monitorSystemApi } from "@/api/monitor";
@@ -220,48 +219,94 @@ function HostResourcesCard({
   );
 }
 
-function ServiceStat({
-  label,
-  value,
-  loading,
-  mono,
-}: {
-  label: string;
-  value?: string | number;
-  loading: boolean;
-  mono?: boolean;
-}) {
+type ServiceRow = {
+  key: string;
+  name: string;
+  running: boolean;
+  version?: string;
+  stats: { label: string; value?: string | number }[];
+};
+
+function ServiceRowItem({ row }: { row: ServiceRow }) {
+  const { t } = useI18n();
+
   return (
-    <div className="flex min-w-0 flex-col gap-1.5">
-      <dt className="text-[10px] leading-tight font-medium tracking-[0.1em] text-muted-foreground uppercase">
-        {label}
-      </dt>
-      <dd
-        className={cn(
-          "truncate text-2xl font-medium tracking-tight",
-          mono ? "font-mono" : "tabular-nums"
-        )}
-      >
-        {loading ? (
-          <Skeleton className="h-7 w-16" />
-        ) : (
-          (value ?? "-")
-        )}
-      </dd>
+    <div className="flex flex-col gap-3 rounded-lg border p-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-baseline gap-2">
+          <span className="truncate text-sm font-medium">{row.name}</span>
+          <span className="truncate font-mono text-[11px] text-muted-foreground">
+            {row.version || "-"}
+          </span>
+        </div>
+        <Badge
+          variant={row.running ? "secondary" : "destructive"}
+          className="shrink-0 gap-1.5 font-normal"
+        >
+          <span
+            className={cn(
+              "size-1.5 rounded-full",
+              row.running
+                ? "animate-pulse bg-chart-5 motion-reduce:animate-none"
+                : "bg-destructive"
+            )}
+          />
+          {row.running ? t("monitor.running") : t("monitor.stopped")}
+        </Badge>
+      </div>
+      {row.stats.length > 0 && (
+        <dl className="grid grid-cols-3 gap-3">
+          {row.stats.map((stat) => (
+            <div key={stat.label} className="flex min-w-0 flex-col gap-0.5">
+              <dt className="truncate text-[10px] leading-tight font-medium tracking-[0.1em] text-muted-foreground uppercase">
+                {stat.label}
+              </dt>
+              <dd className="truncate text-sm font-medium tabular-nums">
+                {stat.value ?? "-"}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )}
     </div>
   );
 }
 
-function ServiceCard({
+/** Only the services this panel is configured to run are listed. */
+function ServicesCard({
+  system,
   hysteria,
   loading,
 }: {
+  system: SystemMonitorVo | null;
   hysteria: Hysteria2MonitorVo | null;
   loading: boolean;
 }) {
   const { t } = useI18n();
-  const known = !loading && hysteria !== null;
-  const running = Boolean(hysteria?.running);
+  const rows: ServiceRow[] = [];
+
+  if (system?.hysteria2Enabled) {
+    rows.push({
+      key: "hysteria2",
+      name: "Hysteria2",
+      running: Boolean(system.hysteria2Running),
+      version: hysteria?.version,
+      stats: [
+        { label: t("dashboard.onlineUsers"), value: hysteria?.userTotal },
+        { label: t("dashboard.onlineDevices"), value: hysteria?.deviceTotal },
+      ],
+    });
+  }
+  if (system?.vlessEnabled) {
+    rows.push({
+      key: "vless",
+      name: "Xray / VLESS",
+      running: Boolean(system.vlessRunning),
+      version: system.xrayVersion,
+      stats: [],
+    });
+  }
+  const running = rows.filter((row) => row.running).length;
 
   return (
     <Card className="gap-4">
@@ -270,60 +315,27 @@ function ServiceCard({
           <span className="flex size-6 items-center justify-center rounded-md bg-muted text-muted-foreground">
             <RocketIcon className="size-3.5" />
           </span>
-          {t("monitor.service")}
+          {t("monitor.services")}
         </CardTitle>
         <CardAction>
-          {known ? (
-            <Badge
-              variant={running ? "secondary" : "destructive"}
-              className="gap-1.5 font-normal"
-            >
-              <span
-                className={cn(
-                  "size-1.5 rounded-full",
-                  running
-                    ? "animate-pulse bg-chart-5 motion-reduce:animate-none"
-                    : "bg-destructive"
-                )}
-              />
-              {running
-                ? t("monitor.hysteria2RunningTrue")
-                : t("monitor.hysteria2RunningFalse")}
-            </Badge>
-          ) : (
+          {loading && rows.length === 0 ? (
             <Skeleton className="h-5 w-16 rounded-full" />
+          ) : (
+            <TinyBadge>
+              {running}/{rows.length}
+            </TinyBadge>
           )}
         </CardAction>
       </CardHeader>
-      <CardContent className="flex flex-1 flex-col justify-between gap-4">
-        <dl className="grid grid-cols-3 gap-4">
-          <ServiceStat
-            label={t("dashboard.version")}
-            value={hysteria?.version}
-            loading={loading}
-            mono
-          />
-          <ServiceStat
-            label={t("dashboard.onlineUsers")}
-            value={hysteria?.userTotal}
-            loading={loading}
-          />
-          <ServiceStat
-            label={t("dashboard.onlineDevices")}
-            value={hysteria?.deviceTotal}
-            loading={loading}
-          />
-        </dl>
-
-        {known && !running ? (
-          <p className="flex items-start gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
-            <ShieldAlertIcon className="mt-px size-3.5 shrink-0" />
-            <span>{t("dashboard.serviceStopped")}</span>
+      <CardContent className="flex flex-1 flex-col gap-3">
+        {loading && rows.length === 0 ? (
+          <Skeleton className="h-16 w-full rounded-lg" />
+        ) : rows.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            {t("monitor.noServices")}
           </p>
         ) : (
-          <p className="text-xs text-muted-foreground">
-            {t("dashboard.serviceRunning")}
-          </p>
+          rows.map((row) => <ServiceRowItem key={row.key} row={row} />)
         )}
       </CardContent>
     </Card>
@@ -379,9 +391,6 @@ export function SystemStatus({ refreshSignal = 0 }: { refreshSignal?: number }) 
               {monitor.autoRefresh ? t("dashboard.live") : t("dashboard.paused")}
             </span>
           </div>
-          <p className="text-[13px] text-muted-foreground">
-            {t("dashboard.systemHint")}
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -425,7 +434,11 @@ export function SystemStatus({ refreshSignal = 0 }: { refreshSignal?: number }) 
 
       <div className="grid gap-4 lg:grid-cols-2">
         <HostResourcesCard system={monitor.system} loading={monitor.loading} />
-        <ServiceCard hysteria={monitor.hysteria} loading={monitor.loading} />
+        <ServicesCard
+          system={monitor.system}
+          hysteria={monitor.hysteria}
+          loading={monitor.loading}
+        />
       </div>
     </section>
   );

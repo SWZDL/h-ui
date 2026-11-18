@@ -63,13 +63,25 @@ func XrayServiceStatusFor(config bo.VlessConfig) (XrayServiceStatus, error) {
 	status := XrayServiceStatus{State: state, Running: state == "active"}
 	versionOutput, versionErr := runXrayCommand(config.XrayBinaryPath, "version")
 	if versionErr == nil {
-		version := strings.TrimSpace(string(versionOutput))
-		if firstLine, _, found := strings.Cut(version, "\n"); found {
-			version = firstLine
-		}
-		status.Version = version
+		status.Version = ShortXrayVersion(string(versionOutput))
 	}
 	return status, nil
+}
+
+// xrayVersionNumber finds the version number in a banner such as
+// "Xray 26.11.9 (Xray, Penetrates Everything.) 676eaf6 (go1.27.3 linux/amd64)".
+var xrayVersionNumber = regexp.MustCompile(`\bv?(\d+\.\d+\.\d+)\b`)
+
+// ShortXrayVersion reduces the Xray banner to "v26.11.9" for display.
+func ShortXrayVersion(banner string) string {
+	if match := xrayVersionNumber.FindStringSubmatch(banner); len(match) == 2 {
+		return "v" + match[1]
+	}
+	version := strings.TrimSpace(banner)
+	if firstLine, _, found := strings.Cut(version, "\n"); found {
+		version = firstLine
+	}
+	return strings.TrimSpace(version)
 }
 
 func ControlXrayService(config bo.VlessConfig, action string) error {

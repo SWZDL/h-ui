@@ -4,6 +4,7 @@ import type {
   LogExportDto,
   LogHysteria2Vo,
   LogSystemVo,
+  LogXrayVo,
   PageVo,
 } from "@/types/api";
 
@@ -13,6 +14,10 @@ export function logSystemApi(data: LogDto) {
 
 export function logHysteria2Api(data: LogDto) {
   return get<PageVo<LogHysteria2Vo>>("/log/logHysteria2", { ...data });
+}
+
+export function logXrayApi(data: LogDto) {
+  return get<PageVo<LogXrayVo>>("/log/logXray", { ...data });
 }
 
 export function exportLogApi(data: LogExportDto) {

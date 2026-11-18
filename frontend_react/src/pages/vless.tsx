@@ -19,8 +19,8 @@ import {
   type XrayServiceStatus,
 } from "@/api/vless";
 import { ConfigField } from "@/components/common/config-field";
+import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { PageHeader } from "@/components/page-header";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +35,7 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/i18n";
+import { cn } from "@/lib/utils";
 
 const DEFAULT_CONFIG: VlessConfig = {
   enabled: false,
@@ -68,6 +69,12 @@ export function VlessPage() {
   const [saving, setSaving] = useState(false);
   const [serviceStatus, setServiceStatus] = useState<XrayServiceStatus | null>(null);
   const [serviceLoading, setServiceLoading] = useState(false);
+  // Stopping, restarting and upgrading affect every Xray user, so the risk is
+  // carried by a confirmation instead of a paragraph nobody reads.
+  const [pendingAction, setPendingAction] = useState<XrayServiceAction | null>(
+    null
+  );
+  const [pendingUpgrade, setPendingUpgrade] = useState(false);
   const [serviceAction, setServiceAction] = useState<XrayServiceAction | null>(null);
   const [versions, setVersions] = useState<string[]>([]);
   const [version, setVersion] = useState("");
@@ -200,17 +207,26 @@ export function VlessPage() {
           <CardTitle>{t("vless.serviceManagement")}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <Alert>
-            <AlertDescription>{t("vless.serviceImpactNotice")}</AlertDescription>
-          </Alert>
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={serviceStatus?.running ? "secondary" : "outline"}>
+            <Badge
+              variant={serviceStatus?.running ? "secondary" : "destructive"}
+              className="gap-1.5 font-normal"
+            >
+              <span
+                className={cn(
+                  "size-1.5 rounded-full",
+                  serviceStatus?.running ? "bg-chart-5" : "bg-destructive"
+                )}
+              />
               {serviceLoading
                 ? t("common.loading")
-                : serviceStatus
-                  ? `${serviceStatus.state} · ${serviceStatus.version || t("vless.versionUnknown")}`
-                  : t("vless.statusUnavailable")}
+                : serviceStatus?.running
+                  ? t("monitor.running")
+                  : t("monitor.stopped")}
             </Badge>
+            <span className="font-mono text-xs text-muted-foreground">
+              {serviceStatus?.version || "-"}
+            </span>
             <Button
               variant="outline"
               size="sm"
@@ -234,7 +250,7 @@ export function VlessPage() {
                 variant="outline"
                 size="sm"
                 disabled={Boolean(serviceAction) || serviceStatus?.running !== true}
-                onClick={() => void controlService("stop")}
+                onClick={() => setPendingAction("stop")}
               >
                 <SquareIcon data-icon="inline-start" />
                 {t("vless.stopService")}
@@ -243,7 +259,7 @@ export function VlessPage() {
                 variant="outline"
                 size="sm"
                 disabled={Boolean(serviceAction) || serviceStatus?.running !== true}
-                onClick={() => void controlService("restart")}
+                onClick={() => setPendingAction("restart")}
               >
                 <RotateCwIcon data-icon="inline-start" />
                 {t("vless.restartService")}
@@ -265,7 +281,7 @@ export function VlessPage() {
             <Button
               size="sm"
               disabled={!version || upgrading || Boolean(serviceAction)}
-              onClick={() => void upgrade()}
+              onClick={() => setPendingUpgrade(true)}
             >
               {upgrading ? <Spinner /> : <DownloadIcon data-icon="inline-start" />}
               {t("vless.upgrade")}
@@ -503,6 +519,27 @@ export function VlessPage() {
           )}
         </CardContent>
       </Card>
+      <ConfirmDialog
+        open={pendingAction !== null || pendingUpgrade}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingAction(null);
+            setPendingUpgrade(false);
+          }
+        }}
+        title={t("vless.confirmImpactTitle")}
+        description={t("vless.confirmImpactDescription")}
+        confirmLabel={t("common.confirm")}
+        destructive
+        onConfirm={() => {
+          const action = pendingAction;
+          const upgradeNow = pendingUpgrade;
+          setPendingAction(null);
+          setPendingUpgrade(false);
+          if (action) void controlService(action);
+          else if (upgradeNow) void upgrade();
+        }}
+      />
     </div>
   );
 }

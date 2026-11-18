@@ -10,6 +10,7 @@ func initLogRouter(accountApi *gin.RouterGroup) {
 	{
 		account.GET("/logSystem", controller.LogSystem)
 		account.GET("/logHysteria2", controller.LogHysteria2)
+		account.GET("/logXray", controller.LogXray)
 		account.POST("/exportLog", controller.ExportLog)
 	}
 }

@@ -7,8 +7,11 @@ type SystemMonitorVo struct {
 	CpuPercent       float64 `json:"cpuPercent"`
 	MemPercent       float64 `json:"memPercent"`
 	DiskPercent      float64 `json:"diskPercent"`
+	Hysteria2Enabled bool    `json:"hysteria2Enabled"`
 	Hysteria2Running bool    `json:"hysteria2Running"`
+	VlessEnabled     bool    `json:"vlessEnabled"`
 	VlessRunning     bool    `json:"vlessRunning"`
+	XrayVersion      string  `json:"xrayVersion"`
 }
 
 type Hysteria2MonitorVo struct {

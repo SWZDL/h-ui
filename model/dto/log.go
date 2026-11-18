@@ -5,5 +5,5 @@ type LogDto struct {
 }
 
 type LogExportDto struct {
-	Option *int `json:"option" form:"option" validate:"required,oneof=0 1"`
+	Option *int `json:"option" form:"option" validate:"required,oneof=0 1 2"`
 }

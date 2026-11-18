@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"h-ui/dao"
 	"h-ui/model/constant"
 	"h-ui/model/vo"
 	"h-ui/proxy"
@@ -14,40 +15,57 @@ import (
 )
 
 // The dashboard polls the monitor endpoints, and every status probe spawns
-// systemctl or the proxy binary; a short cache keeps that cost bounded.
+// systemctl; a short cache keeps that cost bounded.
 const serviceStatusTTL = 5 * time.Second
+
+type proxyServiceState struct {
+	hysteria2Enabled bool
+	hysteria2Running bool
+	vlessEnabled     bool
+	vlessRunning     bool
+	xrayVersion      string
+}
 
 var (
 	serviceStatusMutex sync.Mutex
 	serviceStatusAt    time.Time
-	serviceStatus      struct {
-		hysteria2 bool
-		vless     bool
-	}
+	serviceStatus      proxyServiceState
 )
 
-func vlessServiceRunning() bool {
-	config, err := GetVlessConfig()
-	if err != nil || !config.Enabled {
-		return false
-	}
-	status, err := proxy.XrayServiceStatusFor(config)
-	return err == nil && status.Running
+// hysteria2ServiceEnabled reports whether the panel is configured to run
+// Hysteria2 at all: a disabled service has no links to offer.
+func hysteria2ServiceEnabled() bool {
+	config, err := dao.GetConfig("key = ?", constant.Hysteria2Enable)
+	return err == nil && config.Value != nil && *config.Value == "1"
 }
 
-// runningServices reports which proxy services are currently usable, so the
-// panel only offers subscriptions and node links that actually work.
-func runningServices() (hysteria2 bool, vless bool) {
+func xrayServiceState() (enabled bool, running bool, version string) {
+	config, err := GetVlessConfig()
+	if err != nil || !config.Enabled {
+		return false, false, ""
+	}
+	status, err := proxy.XrayServiceStatusFor(config)
+	if err != nil {
+		return true, false, ""
+	}
+	return true, status.Running, status.Version
+}
+
+// proxyServices reports which proxy services are enabled and running, so the
+// panel only advertises links that actually work.
+func proxyServices() proxyServiceState {
 	serviceStatusMutex.Lock()
 	defer serviceStatusMutex.Unlock()
 	if !serviceStatusAt.IsZero() && time.Since(serviceStatusAt) < serviceStatusTTL {
-		return serviceStatus.hysteria2, serviceStatus.vless
+		return serviceStatus
 	}
-	hysteria2 = Hysteria2IsRunning()
-	vless = vlessServiceRunning()
-	serviceStatus.hysteria2, serviceStatus.vless = hysteria2, vless
-	serviceStatusAt = time.Now()
-	return hysteria2, vless
+	state := proxyServiceState{hysteria2Enabled: hysteria2ServiceEnabled()}
+	if state.hysteria2Enabled {
+		state.hysteria2Running = Hysteria2IsRunning()
+	}
+	state.vlessEnabled, state.vlessRunning, state.xrayVersion = xrayServiceState()
+	serviceStatus, serviceStatusAt = state, time.Now()
+	return state
 }
 
 func MonitorSystem() (vo.SystemMonitorVo, error) {
@@ -63,7 +81,7 @@ func MonitorSystem() (vo.SystemMonitorVo, error) {
 	if err != nil {
 		return vo.SystemMonitorVo{}, errors.New("disk query failed")
 	}
-	hysteria2Running, vlessRunning := runningServices()
+	services := proxyServices()
 	return vo.SystemMonitorVo{
 		Hostname:         util.HostName(),
 		IP:               util.PrimaryIP(),
@@ -71,8 +89,11 @@ func MonitorSystem() (vo.SystemMonitorVo, error) {
 		CpuPercent:       cpuPercent,
 		MemPercent:       memPercent,
 		DiskPercent:      diskPercent,
-		Hysteria2Running: hysteria2Running,
-		VlessRunning:     vlessRunning,
+		Hysteria2Enabled: services.hysteria2Enabled,
+		Hysteria2Running: services.hysteria2Running,
+		VlessEnabled:     services.vlessEnabled,
+		VlessRunning:     services.vlessRunning,
+		XrayVersion:      services.xrayVersion,
 	}, nil
 }
 

@@ -1,7 +1,12 @@
 import { DownloadIcon, RefreshCwIcon, ScrollTextIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { exportLogApi, logHysteria2Api, logSystemApi } from "@/api/log";
+import {
+  exportLogApi,
+  logHysteria2Api,
+  logSystemApi,
+  logXrayApi,
+} from "@/api/log";
 import { EmptyState } from "@/components/common/states";
 import { PageHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -63,7 +68,10 @@ function requestSummary(row: LogRow): string {
     .join(" · ");
 }
 
-export function LogsPage({ kind }: { kind: "system" | "hysteria" }) {
+/** Every log source the panel can tail. */
+export type LogKind = "system" | "hysteria" | "xray";
+
+export function LogsPage({ kind }: { kind: LogKind }) {
   const { t } = useI18n();
 
   const [records, setRecords] = useState<LogRow[]>([]);
@@ -90,7 +98,9 @@ export function LogsPage({ kind }: { kind: "system" | "hysteria" }) {
       const page =
         kind === "system"
           ? await logSystemApi({ numLine })
-          : await logHysteria2Api({ numLine });
+          : kind === "xray"
+            ? await logXrayApi({ numLine })
+            : await logHysteria2Api({ numLine });
       if (!mountedRef.current || requestId !== requestIdRef.current) return;
       setRecords(page.records);
     } catch {
@@ -117,12 +127,9 @@ export function LogsPage({ kind }: { kind: "system" | "hysteria" }) {
     setExporting(true);
     try {
       const response = await exportLogApi({
-        option: kind === "system" ? 0 : 1,
+        option: kind === "system" ? 0 : kind === "xray" ? 2 : 1,
       });
-      downloadResponse(
-        response,
-        kind === "system" ? "h-ui-system-log.txt" : "h-ui-hysteria-log.txt"
-      );
+      downloadResponse(response, `h-ui-${kind}-log.txt`);
       toast.success(t("common.downloadStarted"));
     } catch {
       /* toast handled by the API layer */
@@ -135,7 +142,11 @@ export function LogsPage({ kind }: { kind: "system" | "hysteria" }) {
     <div className="flex flex-col gap-6">
       <PageHeader
         title={
-          kind === "system" ? t("log.systemTitle") : t("log.hysteriaTitle")
+          kind === "system"
+            ? t("log.systemTitle")
+            : kind === "xray"
+              ? t("log.xrayTitle")
+              : t("log.hysteriaTitle")
         }
         description={t("log.description")}
         actions={

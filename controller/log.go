@@ -7,7 +7,9 @@ import (
 	"h-ui/model/constant"
 	"h-ui/model/dto"
 	"h-ui/model/vo"
+	"h-ui/service"
 	"h-ui/util"
+	"strings"
 	"time"
 )
 
@@ -89,6 +91,26 @@ func LogHysteria2(c *gin.Context) {
 	}, c)
 }
 
+func LogXray(c *gin.Context) {
+	logDto, err := validateField(c, dto.LogDto{})
+	if err != nil {
+		return
+	}
+	numLine := 100
+	if logDto.NumLine != nil && *logDto.NumLine > 0 {
+		numLine = *logDto.NumLine
+	}
+	logs, err := service.VlessLogs(numLine)
+	if err != nil {
+		vo.Fail("Unable to read log file", c)
+		return
+	}
+	vo.Success(vo.LogSystemPage[vo.LogXrayVo]{
+		LogSystemVos: logs,
+		Total:        int64(len(logs)),
+	}, c)
+}
+
 func ExportLog(c *gin.Context) {
 	logExportDto, err := validateField(c, dto.LogExportDto{})
 	if err != nil {
@@ -103,6 +125,22 @@ func ExportLog(c *gin.Context) {
 	} else if *logExportDto.Option == 1 {
 		fileName = fmt.Sprintf("hysteria2-%s.log", time.Now().Format("20060102150405"))
 		filePath = constant.Hysteria2LogPath
+	} else if *logExportDto.Option == 2 {
+		fileName = fmt.Sprintf("xray-%s.log", time.Now().Format("20060102150405"))
+		logs, err := service.VlessLogs(3000)
+		if err != nil {
+			vo.Fail("log file not exist", c)
+			return
+		}
+		lines := make([]string, 0, len(logs))
+		for _, item := range logs {
+			lines = append(lines, fmt.Sprintf("%s [%s] %s", item.Time, item.Level, item.Msg))
+		}
+		c.Header("Content-Type", "application/octet-stream")
+		c.Header("Content-Transfer-Encoding", "binary")
+		c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", fileName))
+		c.String(200, strings.Join(lines, "\n"))
+		return
 	}
 
 	if !util.Exists(filePath) {

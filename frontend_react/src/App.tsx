@@ -84,6 +84,7 @@ export default function App() {
             path="log/hysteria"
             element={admin(<LogsPage kind="hysteria" />)}
           />
+          <Route path="log/xray" element={admin(<LogsPage kind="xray" />)} />
           <Route path="404" element={<NotFoundPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>

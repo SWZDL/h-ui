@@ -1,6 +1,6 @@
 package vo
 
-type LogSystemPage[T LogSystemVo | LogHysteria2Vo] struct {
+type LogSystemPage[T LogSystemVo | LogHysteria2Vo | LogXrayVo] struct {
 	LogSystemVos []T   `json:"records"`
 	Total        int64 `json:"total"`
 }
@@ -17,6 +17,13 @@ type LogSystemVo struct {
 }
 
 type LogHysteria2Vo struct {
+	Level string `json:"level"`
+	Msg   string `json:"msg"`
+	Time  string `json:"time"`
+}
+
+// LogXrayVo is one line of the Xray service journal.
+type LogXrayVo struct {
 	Level string `json:"level"`
 	Msg   string `json:"msg"`
 	Time  string `json:"time"`

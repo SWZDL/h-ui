@@ -462,8 +462,7 @@ export function SystemConfigPage() {
                 </ConfigField>
 
                 <ConfigField
-                  label={t("config.hysteria2TrafficTime")}
-                  hint={t("config.trafficTimeHint")}
+                  label={t("config.trafficTime")}
                   htmlFor="hysteria2-traffic-time"
                   required
                   error={errors.hysteria2TrafficTime}
@@ -503,9 +502,6 @@ export function SystemConfigPage() {
                         >
                           {t("config.httpsSection")}
                         </h2>
-                        <p className="max-w-md text-sm text-muted-foreground">
-                          {t("config.httpsHint")}
-                        </p>
                       </div>
                       {https && (
                         <Button
@@ -520,7 +516,7 @@ export function SystemConfigPage() {
                           ) : (
                             <ShieldCheckIcon data-icon="inline-start" />
                           )}
-                          {t("config.useHysteria2Cert")}
+                          {t("config.reuseHysteria2Cert")}
                         </Button>
                       )}
                     </div>

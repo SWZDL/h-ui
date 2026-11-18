@@ -1,4 +1,5 @@
 import {
+  FileCode2Icon,
   FileTextIcon,
   RocketIcon,
   ScrollTextIcon,
@@ -70,6 +71,11 @@ export const navGroups: NavGroup[] = [
             to: "/log/hysteria",
             labelKey: "route.logHysteria",
             icon: TerminalSquareIcon,
+          },
+          {
+            to: "/log/xray",
+            labelKey: "route.logXray",
+            icon: FileCode2Icon,
           },
         ],
       },

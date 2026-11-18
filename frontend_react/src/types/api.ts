@@ -314,6 +314,12 @@ export interface LogHysteria2Vo {
   time: string;
 }
 
+export interface LogXrayVo {
+  level: string;
+  msg: string;
+  time: string;
+}
+
 /* ----------------------------------------------------------------- monitor */
 
 export interface SystemMonitorVo {
@@ -323,8 +329,11 @@ export interface SystemMonitorVo {
   cpuPercent: number;
   diskPercent: number;
   memPercent: number;
+  hysteria2Enabled: boolean;
   hysteria2Running: boolean;
+  vlessEnabled: boolean;
   vlessRunning: boolean;
+  xrayVersion: string;
 }
 
 export interface Hysteria2MonitorVo {

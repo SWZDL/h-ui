@@ -606,7 +606,11 @@ function AccountFormBody({
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
-    const quotaBytes = calculateBytes(Number(form.capacity) || 0, form.unit);
+    // Xray accounts are billed in whole bytes; a fractional value would be
+    // rejected by the API as an invalid number.
+    const quotaBytes = Math.round(
+      calculateBytes(Number(form.capacity) || 0, form.unit)
+    );
     const payload = {
       remark: form.remark.trim(),
       username: form.username.trim(),
