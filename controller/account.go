@@ -12,6 +12,7 @@ import (
 	"h-ui/service"
 	"h-ui/util"
 	"io"
+	"net"
 	"strings"
 	"time"
 )
@@ -19,16 +20,19 @@ import (
 func Login(c *gin.Context) {
 	loginDto, err := validateField(c, dto.LoginDto{})
 	if err != nil {
+		logLoginFailure(c, "", "invalid request")
 		return
 	}
 
 	if !service.ExistAccountUsername(*loginDto.Username, 0) {
+		logLoginFailure(c, *loginDto.Username, "unknown account")
 		vo.Fail("account not exist", c)
 		return
 	}
 
 	token, err := service.Login(*loginDto.Username, util.SHA224String(*loginDto.Pass))
 	if err != nil {
+		logLoginFailure(c, *loginDto.Username, "wrong password")
 		vo.Fail(err.Error(), c)
 		return
 	}
@@ -40,6 +44,24 @@ func Login(c *gin.Context) {
 		_ = service.TelegramLoginRemind(*loginDto.Username, c.ClientIP())
 	}()
 	vo.Success(jwtVo, c)
+}
+
+// logLoginFailure emits one stable line per rejected panel login, which the
+// fail2ban "hui-login" jail turns into a ban after repeated failures. The
+// password is never logged, and the address is the TCP peer rather than
+// X-Forwarded-For (which the client controls), so a spoofed header cannot get
+// an unrelated IP banned.
+func logLoginFailure(c *gin.Context, username string, reason string) {
+	clientIP := c.Request.RemoteAddr
+	if host, _, err := net.SplitHostPort(clientIP); err == nil {
+		clientIP = host
+	}
+	logrus.WithFields(logrus.Fields{
+		"event":    "panel_login_failed",
+		"clientIP": clientIP,
+		"username": username,
+		"reason":   reason,
+	}).Warn("panel login failed")
 }
 
 func PageAccount(c *gin.Context) {
