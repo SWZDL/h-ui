@@ -4,7 +4,9 @@ import (
 	"crypto/sha256"
 	"embed"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"html"
 	"io/fs"
 	"net/http"
 	"path"
@@ -262,13 +264,17 @@ func etagMatches(header string, etag string) bool {
 }
 
 func replaceRelativePaths(htmlContent string, basePath string) string {
+	basePath = strings.TrimRight(strings.TrimSpace(basePath), "/")
 	if basePath == "/" {
 		basePath = ""
 	}
 	htmlContent = strings.ReplaceAll(htmlContent, "/__dynamic_base__/", basePath+"/")
+	baseHref := html.EscapeString(basePath + "/")
+	htmlContent = strings.Replace(htmlContent, "<head>", "<head>\n<base href=\""+baseHref+"\">", 1)
+	basePathJSON, _ := json.Marshal(basePath)
 	injection := fmt.Sprintf(`
 	<script>
-		window.__dynamic_base__ = "%s";
-	</script>`, basePath)
+		window.__dynamic_base__ = %s;
+	</script>`, basePathJSON)
 	return strings.Replace(htmlContent, "</head>", injection+"</head>", 1)
 }

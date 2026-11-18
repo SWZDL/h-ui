@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"h-ui/model/constant"
 	"h-ui/model/dto"
 	"h-ui/model/entity"
@@ -54,8 +55,15 @@ func PageAccount(c *gin.Context) {
 
 	onlineUsers, err := service.Hysteria2Online()
 	if err != nil {
-		vo.Fail(err.Error(), c)
-		return
+		// An unavailable Hysteria2 stats API must not hide otherwise valid
+		// account rows (for example, when another service owns its port).
+		logrus.Warnf("load Hysteria2 online users for account list: %v", err)
+		onlineUsers = map[string]int64{}
+	}
+	vlessOnlineUsers, err := service.VlessOnline()
+	if err != nil {
+		logrus.Warnf("load VLESS online users for account list: %v", err)
+		vlessOnlineUsers = map[string]int64{}
 	}
 
 	var accountVos []vo.AccountVo
@@ -82,6 +90,12 @@ func PageAccount(c *gin.Context) {
 			accountVo.Online = true
 			accountVo.Device = value
 			delete(onlineUsers, *item.Username)
+		}
+		if value := vlessOnlineUsers[*item.Username]; value > 0 {
+			accountVo.Online = true
+			if value > accountVo.Device {
+				accountVo.Device = value
+			}
 		}
 		accountVos = append(accountVos, accountVo)
 	}

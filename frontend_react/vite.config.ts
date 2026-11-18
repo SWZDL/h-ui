@@ -11,7 +11,9 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
 
   return {
-    base: mode === "production" ? "/__dynamic_base__/" : "/",
+    // Relative chunk URLs work at any context path; the embedded Go server
+    // injects a <base> URL into index.html before serving it.
+    base: mode === "production" ? "./" : "/",
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

@@ -2,12 +2,15 @@ package frontend
 
 import (
 	"embed"
+	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
+	"html"
 	"io/fs"
 	"net/http"
 	"path"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 //go:embed dist/*
@@ -63,13 +66,17 @@ func getFileContent(filePath string) ([]byte, error) {
 }
 
 func replaceRelativePaths(htmlContent string, basePath string) string {
+	basePath = strings.TrimRight(strings.TrimSpace(basePath), "/")
 	if basePath == "/" {
 		basePath = ""
 	}
 	htmlContent = strings.ReplaceAll(htmlContent, "/__dynamic_base__/", basePath+"/")
+	baseHref := html.EscapeString(basePath + "/")
+	htmlContent = strings.Replace(htmlContent, "<head>", "<head>\n<base href=\""+baseHref+"\">", 1)
+	basePathJSON, _ := json.Marshal(basePath)
 	injection := fmt.Sprintf(`
 	<script>
-		window.__dynamic_base__ = "%s";
-	</script>`, basePath)
+		window.__dynamic_base__ = %s;
+	</script>`, basePathJSON)
 	return strings.Replace(htmlContent, "</head>", injection+"</head>", 1)
 }

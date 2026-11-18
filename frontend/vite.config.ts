@@ -21,12 +21,12 @@ const pathSrc = path.resolve(__dirname, "src");
 const INVALID_CHAR_REGEX = /[\u0000-\u001F"#$&*+,:;<=>?[\]^`{|}\u007F]/g;
 const DRIVE_LETTER_REGEX = /^[a-z]:/i;
 
-import { dynamicBase } from "vite-plugin-dynamic-base";
-
 export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
   const env = loadEnv(mode, process.cwd());
   return {
-    base: mode === "production" ? "/__dynamic_base__/" : "/",
+    // Relative chunk URLs work at any context path; the embedded Go server
+    // injects a <base> URL into index.html before serving it.
+    base: mode === "production" ? "./" : "/",
     resolve: {
       alias: {
         "@": pathSrc,
@@ -57,7 +57,6 @@ export default defineConfig(({ mode }: ConfigEnv): UserConfig => {
       },
     },
     plugins: [
-      dynamicBase({}),
       vue(),
       UnoCSS({
         /* options */

@@ -49,8 +49,9 @@ npm run build:prod
 ```
 
 `dist/` is embedded by [`embed.go`](embed.go) into the Go binary. The build uses
-`/__dynamic_base__/` as the asset base; the Go server rewrites it to the
-configured `H_UI_WEB_CONTEXT`, so the panel works at the root and on sub-paths.
+relative asset URLs, and the Go server injects a `<base>` URL for the configured
+`H_UI_WEB_CONTEXT`, so entry and lazy-loaded chunks work at the root and on
+sub-paths.
 
 Both frontends (`frontend_react/dist` and `frontend/dist`) must exist before
 `go build`. Choose the served application at startup:
