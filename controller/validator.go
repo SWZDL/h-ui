@@ -1,13 +1,16 @@
 package controller
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/sirupsen/logrus"
 	"h-ui/model/constant"
 	"h-ui/model/vo"
 	"net/http"
 	"regexp"
+	"strings"
 )
 
 var validate *validator.Validate
@@ -26,16 +29,30 @@ func validateStr(f validator.FieldLevel) bool {
 }
 
 func validateField[T interface{}](c *gin.Context, field T) (T, error) {
-	if c.Request.Method == http.MethodGet {
-		_ = c.ShouldBindQuery(&field)
-	} else if c.Request.Method == http.MethodPost ||
-		c.Request.Method == http.MethodPut ||
-		c.Request.Method == http.MethodDelete {
-		_ = c.ShouldBindJSON(&field)
+	var bindErr error
+	switch c.Request.Method {
+	case http.MethodGet:
+		bindErr = c.ShouldBindQuery(&field)
+	case http.MethodPost, http.MethodPut, http.MethodDelete:
+		bindErr = c.ShouldBindJSON(&field)
 	}
-	if err := validate.Struct(&field); err != nil {
+	// A rejected number (for example a fractional byte count) must not look like
+	// a successful request: report it instead of silently keeping the old value.
+	if bindErr != nil {
+		logrus.Warnf("%s %s: %v", c.Request.Method, c.FullPath(), bindErr)
 		vo.Fail(constant.InvalidError, c)
 		return field, fmt.Errorf(constant.InvalidError)
+	}
+	if err := validate.Struct(&field); err != nil {
+		message := constant.InvalidError
+		var fieldErrors validator.ValidationErrors
+		if errors.As(err, &fieldErrors) && len(fieldErrors) > 0 {
+			// Name the offending field so the message is actionable.
+			message = fmt.Sprintf("%s: %s", constant.InvalidError, strings.ToLower(fieldErrors[0].Field()))
+		}
+		logrus.Warnf("%s %s: %v", c.Request.Method, c.FullPath(), err)
+		vo.Fail(message, c)
+		return field, fmt.Errorf("%s", message)
 	}
 	return field, nil
 }
