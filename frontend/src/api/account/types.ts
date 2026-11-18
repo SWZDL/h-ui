@@ -36,6 +36,10 @@ export interface AccountVo extends IdDto {
   quota: number;
   download: number;
   upload: number;
+  hysteria2Download: number;
+  hysteria2Upload: number;
+  vlessDownload: number;
+  vlessUpload: number;
   expireTime: number;
   kickUtilTime: number;
   deviceNo: number;

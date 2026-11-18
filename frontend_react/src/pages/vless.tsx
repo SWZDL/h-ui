@@ -1,15 +1,29 @@
+import {
+  DownloadIcon,
+  PlayIcon,
+  RefreshCwIcon,
+  RotateCwIcon,
+  SquareIcon,
+} from "lucide-react";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import {
+  controlXrayServiceApi,
   getVlessConfigApi,
+  getXrayServiceStatusApi,
+  listXrayReleaseVersionsApi,
   updateVlessConfigApi,
+  upgradeXrayApi,
   type VlessConfig,
+  type XrayServiceAction,
+  type XrayServiceStatus,
 } from "@/api/vless";
 import { ConfigField } from "@/components/common/config-field";
 import { PageHeader } from "@/components/page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -52,6 +66,12 @@ export function VlessPage() {
   const [config, setConfig] = useState<VlessConfig>(DEFAULT_CONFIG);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [serviceStatus, setServiceStatus] = useState<XrayServiceStatus | null>(null);
+  const [serviceLoading, setServiceLoading] = useState(false);
+  const [serviceAction, setServiceAction] = useState<XrayServiceAction | null>(null);
+  const [versions, setVersions] = useState<string[]>([]);
+  const [version, setVersion] = useState("");
+  const [upgrading, setUpgrading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -64,9 +84,62 @@ export function VlessPage() {
     }
   }, []);
 
+  const loadServiceStatus = useCallback(async () => {
+    setServiceLoading(true);
+    try {
+      setServiceStatus(await getXrayServiceStatusApi());
+    } catch {
+      setServiceStatus(null);
+    } finally {
+      setServiceLoading(false);
+    }
+  }, []);
+
+  const loadVersions = useCallback(async () => {
+    try {
+      const available = await listXrayReleaseVersionsApi();
+      setVersions(available);
+      setVersion((current) => current || available[0] || "");
+    } catch {
+      setVersions([]);
+    }
+  }, []);
+
   useEffect(() => {
     void load();
-  }, [load]);
+    void loadServiceStatus();
+    void loadVersions();
+    const timer = window.setInterval(() => void loadServiceStatus(), 15000);
+    return () => window.clearInterval(timer);
+  }, [load, loadServiceStatus, loadVersions]);
+
+  const controlService = async (action: XrayServiceAction) => {
+    if (serviceAction) return;
+    setServiceAction(action);
+    try {
+      await controlXrayServiceApi(action);
+      toast.success(t("vless.serviceActionSuccess"));
+      await loadServiceStatus();
+    } catch {
+      /* API layer reports the error. */
+    } finally {
+      setServiceAction(null);
+    }
+  };
+
+  const upgrade = async () => {
+    if (!version || upgrading) return;
+    setUpgrading(true);
+    try {
+      await upgradeXrayApi(version);
+      toast.success(t("vless.upgradeSuccess"));
+      await loadServiceStatus();
+    } catch {
+      /* API layer reports the error. */
+    } finally {
+      setUpgrading(false);
+    }
+  };
 
   const setField = <K extends keyof VlessConfig>(
     key: K,
@@ -125,6 +198,84 @@ export function VlessPage() {
       <Alert>
         <AlertDescription>{t("vless.externalServerTip")}</AlertDescription>
       </Alert>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("vless.serviceManagement")}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <Alert>
+            <AlertDescription>{t("vless.serviceImpactNotice")}</AlertDescription>
+          </Alert>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant={serviceStatus?.running ? "secondary" : "outline"}>
+              {serviceLoading
+                ? t("common.loading")
+                : serviceStatus
+                  ? `${serviceStatus.state} · ${serviceStatus.version || t("vless.versionUnknown")}`
+                  : t("vless.statusUnavailable")}
+            </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void loadServiceStatus()}
+              disabled={serviceLoading}
+            >
+              <RefreshCwIcon data-icon="inline-start" />
+              {t("common.refresh")}
+            </Button>
+            <div className="ml-auto flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={Boolean(serviceAction) || serviceStatus?.running === true}
+                onClick={() => void controlService("start")}
+              >
+                <PlayIcon data-icon="inline-start" />
+                {t("vless.startService")}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={Boolean(serviceAction) || serviceStatus?.running !== true}
+                onClick={() => void controlService("stop")}
+              >
+                <SquareIcon data-icon="inline-start" />
+                {t("vless.stopService")}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={Boolean(serviceAction) || serviceStatus?.running !== true}
+                onClick={() => void controlService("restart")}
+              >
+                <RotateCwIcon data-icon="inline-start" />
+                {t("vless.restartService")}
+              </Button>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 border-t pt-4">
+            <span className="text-sm font-medium">{t("vless.upgradeXray")}</span>
+            <Select value={version} onValueChange={setVersion}>
+              <SelectTrigger className="w-44">
+                <SelectValue placeholder={t("vless.selectVersion")} />
+              </SelectTrigger>
+              <SelectContent>
+                {versions.map((item) => (
+                  <SelectItem key={item} value={item}>{item}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              size="sm"
+              disabled={!version || upgrading || Boolean(serviceAction)}
+              onClick={() => void upgrade()}
+            >
+              {upgrading ? <Spinner /> : <DownloadIcon data-icon="inline-start" />}
+              {t("vless.upgrade")}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
       <Card>
         <CardContent>
           {loading ? (

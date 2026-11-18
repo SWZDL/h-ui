@@ -34,6 +34,48 @@ func UpdateVlessConfig(c *gin.Context) {
 	vo.Success(nil, c)
 }
 
+func VlessXrayServiceStatus(c *gin.Context) {
+	status, err := service.VlessXrayServiceStatus()
+	if err != nil {
+		vo.Fail(err.Error(), c)
+		return
+	}
+	vo.Success(status, c)
+}
+
+func VlessXrayServiceAction(c *gin.Context) {
+	request, err := validateField(c, dto.VlessServiceActionDto{})
+	if err != nil {
+		return
+	}
+	if err = service.ControlVlessXrayService(*request.Action); err != nil {
+		vo.Fail(err.Error(), c)
+		return
+	}
+	vo.Success(nil, c)
+}
+
+func ListXrayReleaseVersions(c *gin.Context) {
+	versions, err := service.ListXrayReleaseVersions()
+	if err != nil {
+		vo.Fail(err.Error(), c)
+		return
+	}
+	vo.Success(versions, c)
+}
+
+func UpgradeVlessXray(c *gin.Context) {
+	request, err := validateField(c, dto.VlessVersionDto{})
+	if err != nil {
+		return
+	}
+	if err = service.UpgradeVlessXray(*request.Version); err != nil {
+		vo.Fail(err.Error(), c)
+		return
+	}
+	vo.Success(nil, c)
+}
+
 func VlessUrl(c *gin.Context) {
 	request, err := validateField(c, dto.VlessUrlDto{})
 	if err != nil {

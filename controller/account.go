@@ -69,15 +69,19 @@ func PageAccount(c *gin.Context) {
 	var accountVos []vo.AccountVo
 	for _, item := range accounts {
 		accountVo := vo.AccountVo{
-			Username:     *item.Username,
-			Quota:        *item.Quota,
-			Download:     *item.Download,
-			Upload:       *item.Upload,
-			ExpireTime:   *item.ExpireTime,
-			KickUtilTime: *item.KickUtilTime,
-			DeviceNo:     *item.DeviceNo,
-			Role:         *item.Role,
-			Deleted:      *item.Deleted,
+			Username:          *item.Username,
+			Quota:             *item.Quota,
+			Download:          *item.Download,
+			Upload:            *item.Upload,
+			Hysteria2Download: accountTrafficValue(item.Hysteria2Download),
+			Hysteria2Upload:   accountTrafficValue(item.Hysteria2Upload),
+			VlessDownload:     accountTrafficValue(item.VlessDownload),
+			VlessUpload:       accountTrafficValue(item.VlessUpload),
+			ExpireTime:        *item.ExpireTime,
+			KickUtilTime:      *item.KickUtilTime,
+			DeviceNo:          *item.DeviceNo,
+			Role:              *item.Role,
+			Deleted:           *item.Deleted,
 			BaseVo: vo.BaseVo{
 				Id:         *item.Id,
 				CreateTime: *item.CreateTime,
@@ -238,6 +242,13 @@ func GetAccountInfo(c *gin.Context) {
 	vo.Success(accountInfoVo, c)
 }
 
+func accountTrafficValue(value *int64) int64 {
+	if value == nil {
+		return 0
+	}
+	return *value
+}
+
 func GetAccount(c *gin.Context) {
 	idDto, err := validateField(c, dto.IdDto{})
 	if err != nil {
@@ -259,15 +270,19 @@ func GetAccount(c *gin.Context) {
 			Id:         *account.Id,
 			CreateTime: *account.CreateTime,
 		},
-		Username:   *account.Username,
-		Quota:      *account.Quota,
-		Download:   *account.Download,
-		Upload:     *account.Upload,
-		ExpireTime: *account.ExpireTime,
-		DeviceNo:   *account.DeviceNo,
-		Role:       *account.Role,
-		Deleted:    *account.Deleted,
-		Remark:     *account.Remark,
+		Username:          *account.Username,
+		Quota:             *account.Quota,
+		Download:          *account.Download,
+		Upload:            *account.Upload,
+		Hysteria2Download: accountTrafficValue(account.Hysteria2Download),
+		Hysteria2Upload:   accountTrafficValue(account.Hysteria2Upload),
+		VlessDownload:     accountTrafficValue(account.VlessDownload),
+		VlessUpload:       accountTrafficValue(account.VlessUpload),
+		ExpireTime:        *account.ExpireTime,
+		DeviceNo:          *account.DeviceNo,
+		Role:              *account.Role,
+		Deleted:           *account.Deleted,
+		Remark:            *account.Remark,
 	}
 	vo.Success(accountVo, c)
 }

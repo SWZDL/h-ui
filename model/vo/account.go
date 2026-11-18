@@ -2,15 +2,19 @@ package vo
 
 type AccountVo struct {
 	BaseVo
-	Username     string `json:"username"`
-	Quota        int64  `json:"quota"`
-	Download     int64  `json:"download"`
-	Upload       int64  `json:"upload"`
-	ExpireTime   int64  `json:"expireTime"`
-	KickUtilTime int64  `json:"kickUtilTime"` // Offline remaining time
-	DeviceNo     int64  `json:"deviceNo"`     // Limit the number of devices
-	Role         string `json:"role"`
-	Deleted      int64  `json:"deleted"`
+	Username          string `json:"username"`
+	Quota             int64  `json:"quota"`
+	Download          int64  `json:"download"`
+	Upload            int64  `json:"upload"`
+	Hysteria2Download int64  `json:"hysteria2Download"`
+	Hysteria2Upload   int64  `json:"hysteria2Upload"`
+	VlessDownload     int64  `json:"vlessDownload"`
+	VlessUpload       int64  `json:"vlessUpload"`
+	ExpireTime        int64  `json:"expireTime"`
+	KickUtilTime      int64  `json:"kickUtilTime"` // Offline remaining time
+	DeviceNo          int64  `json:"deviceNo"`     // Limit the number of devices
+	Role              string `json:"role"`
+	Deleted           int64  `json:"deleted"`
 
 	Online bool  `json:"online"` // online status
 	Device int64 `json:"device"` // Number of online devices

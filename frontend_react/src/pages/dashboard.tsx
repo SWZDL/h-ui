@@ -232,7 +232,6 @@ export function DashboardPage() {
   const used = (account?.download ?? 0) + (account?.upload ?? 0);
   const unlimited = quota === -1;
   const usagePercent = !unlimited && quota > 0 ? (used / quota) * 100 : undefined;
-  const remaining = unlimited ? -1 : Math.max(quota - used, 0);
   const insecure = window.location.protocol !== "https:";
 
   return (
@@ -439,6 +438,7 @@ export function DashboardPage() {
         </div>
       )}
 
+      <p className="text-xs text-muted-foreground">{t("dashboard.nodeTrafficHint")}</p>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label={t("account.quota")}
@@ -463,22 +463,18 @@ export function DashboardPage() {
           }
         />
         <StatCard
-          label={t("account.download")}
+          label={t("account.hysteria2Traffic")}
           icon={ArrowDownToLineIcon}
-          value={formatBytes(account?.download ?? 0)}
-          badge={<TinyBadge>{formatStorageUnit(account?.download ?? 0)}</TinyBadge>}
-          hint={
-            unlimited
-              ? t("dashboard.quotaNoLimit")
-              : `${t("dashboard.remaining")} ${formatBytes(remaining)}`
-          }
+          value={formatBytes((account?.hysteria2Download ?? 0) + (account?.hysteria2Upload ?? 0))}
+          badge={<TinyBadge>{formatStorageUnit((account?.hysteria2Download ?? 0) + (account?.hysteria2Upload ?? 0))}</TinyBadge>}
+          hint={`↓ ${formatBytes(account?.hysteria2Download ?? 0)} · ↑ ${formatBytes(account?.hysteria2Upload ?? 0)}`}
         />
         <StatCard
-          label={t("account.upload")}
+          label={t("account.vlessTraffic")}
           icon={ArrowUpFromLineIcon}
-          value={formatBytes(account?.upload ?? 0)}
-          badge={<TinyBadge>{formatStorageUnit(account?.upload ?? 0)}</TinyBadge>}
-          hint={`${t("dashboard.used")} ${formatBytes(used)}`}
+          value={formatBytes((account?.vlessDownload ?? 0) + (account?.vlessUpload ?? 0))}
+          badge={<TinyBadge>{formatStorageUnit((account?.vlessDownload ?? 0) + (account?.vlessUpload ?? 0))}</TinyBadge>}
+          hint={`↓ ${formatBytes(account?.vlessDownload ?? 0)} · ↑ ${formatBytes(account?.vlessUpload ?? 0)}`}
         />
         <StatCard
           label={t("account.expireTime")}

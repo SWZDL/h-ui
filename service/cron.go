@@ -52,7 +52,7 @@ func CronResetTraffic() {
 	}
 	idsList := util.SplitArr(ids, 100)
 	for _, item := range idsList {
-		if err := dao.UpdateAccount(item, map[string]interface{}{"download": 0, "upload": 0}); err != nil {
+		if err := dao.UpdateAccount(item, map[string]interface{}{"download": 0, "upload": 0, "hysteria2_download": 0, "hysteria2_upload": 0, "vless_download": 0, "vless_upload": 0}); err != nil {
 			continue
 		}
 	}
@@ -86,7 +86,7 @@ func saveAccountTraffic(apiPort int64, jwtSecret string) {
 			go func(userList map[string]bo.Hysteria2UserTraffic) {
 				defer wg.Done()
 				for username, traffic := range userList {
-					if err = dao.UpdateAccountTraffic(username, int64(float64(traffic.Rx)*hysteria2TrafficTimeFloat), int64(float64(traffic.Tx)*hysteria2TrafficTimeFloat)); err != nil {
+					if err = dao.UpdateAccountNodeTraffic(username, "hysteria2", int64(float64(traffic.Rx)*hysteria2TrafficTimeFloat), int64(float64(traffic.Tx)*hysteria2TrafficTimeFloat)); err != nil {
 						continue
 					}
 				}

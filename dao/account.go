@@ -49,10 +49,23 @@ func UpsertAccount(accounts []entity.Account) error {
 			uuidValue := uuid.NewString()
 			accounts[i].VlessUUID = &uuidValue
 		}
+		zero := int64(0)
+		if accounts[i].Hysteria2Download == nil {
+			accounts[i].Hysteria2Download = &zero
+		}
+		if accounts[i].Hysteria2Upload == nil {
+			accounts[i].Hysteria2Upload = &zero
+		}
+		if accounts[i].VlessDownload == nil {
+			accounts[i].VlessDownload = &zero
+		}
+		if accounts[i].VlessUpload == nil {
+			accounts[i].VlessUpload = &zero
+		}
 	}
 	if tx := sqliteDB.Model(&entity.Account{}).Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "username"}},
-		DoUpdates: clause.AssignmentColumns([]string{"pass", "con_pass", "vless_uuid", "quota", "download", "upload", "expire_time", "kick_util_time", "device_no", "role", "deleted", "create_time", "update_time", "login_at", "con_at", "remark"}),
+		DoUpdates: clause.AssignmentColumns([]string{"pass", "con_pass", "vless_uuid", "quota", "download", "upload", "hysteria2_download", "hysteria2_upload", "vless_download", "vless_upload", "expire_time", "kick_util_time", "device_no", "role", "deleted", "create_time", "update_time", "login_at", "con_at", "remark"}),
 	}).Create(accounts); tx.Error != nil {
 		logrus.Errorf("%v", tx.Error)
 		return errors.New(constant.SysError)
@@ -61,21 +74,39 @@ func UpsertAccount(accounts []entity.Account) error {
 }
 
 func UpdateAccountTraffic(username string, download int64, upload int64) error {
-	if upload != 0 || download != 0 {
-		updates := map[string]interface{}{}
-		if download != 0 {
-			updates["download"] = gorm.Expr("download + ?", download)
+	return updateAccountTraffic(username, "", download, upload)
+}
+
+func UpdateAccountNodeTraffic(username string, node string, download int64, upload int64) error {
+	if node != "hysteria2" && node != "vless" {
+		return errors.New("unsupported traffic node")
+	}
+	return updateAccountTraffic(username, node, download, upload)
+}
+
+func updateAccountTraffic(username string, node string, download int64, upload int64) error {
+	if upload == 0 && download == 0 {
+		return nil
+	}
+	updates := map[string]interface{}{}
+	if download != 0 {
+		updates["download"] = gorm.Expr("download + ?", download)
+		if node != "" {
+			updates[node+"_download"] = gorm.Expr(node+"_download + ?", download)
 		}
-		if upload != 0 {
-			updates["upload"] = gorm.Expr("upload + ?", upload)
+	}
+	if upload != 0 {
+		updates["upload"] = gorm.Expr("upload + ?", upload)
+		if node != "" {
+			updates[node+"_upload"] = gorm.Expr(node+"_upload + ?", upload)
 		}
-		updates["update_time"] = time.Now().Format("2006-01-02 15:04:05")
-		if tx := sqliteDB.Model(&entity.Account{}).
-			Where("username = ?", username).
-			Updates(updates); tx.Error != nil {
-			logrus.Errorf("%v", tx.Error)
-			return errors.New(constant.SysError)
-		}
+	}
+	updates["update_time"] = time.Now().Format("2006-01-02 15:04:05")
+	if tx := sqliteDB.Model(&entity.Account{}).
+		Where("username = ?", username).
+		Updates(updates); tx.Error != nil {
+		logrus.Errorf("%v", tx.Error)
+		return errors.New(constant.SysError)
 	}
 	return nil
 }

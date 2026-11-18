@@ -9,3 +9,11 @@ type VlessSubscribeUrlDto struct {
 type VlessUrlDto struct {
 	AccountId *int64 `json:"accountId" form:"accountId" validate:"required,gt=0"`
 }
+
+type VlessServiceActionDto struct {
+	Action *string `json:"action" validate:"required,oneof=start stop restart"`
+}
+
+type VlessVersionDto struct {
+	Version *string `json:"version" validate:"required,min=1,max=64"`
+}

@@ -1,6 +1,26 @@
 <template>
   <div class="app-container">
     <el-alert :title="$t('vless.externalServerTip')" type="info" :closable="false" class="mb-4" />
+    <el-card shadow="never" class="mb-4">
+      <template #header>{{ $t("vless.serviceManagement") }}</template>
+      <el-alert :title="$t('vless.serviceImpactNotice')" type="warning" :closable="false" class="mb-4" />
+      <div class="flex flex-wrap items-center gap-2">
+        <el-tag :type="serviceStatus?.running ? 'success' : 'info'">
+          {{ statusLoading ? $t("vless.checkingStatus") : serviceStatus ? `${serviceStatus.state} · ${serviceStatus.version || $t("vless.versionUnknown")}` : $t("vless.statusUnavailable") }}
+        </el-tag>
+        <el-button :loading="statusLoading" @click="loadServiceStatus">{{ $t("common.refresh") }}</el-button>
+        <el-button type="success" :disabled="Boolean(serviceStatus?.running || serviceAction)" @click="controlService('start')">{{ $t("vless.startService") }}</el-button>
+        <el-button type="warning" :disabled="!serviceStatus?.running || Boolean(serviceAction)" @click="controlService('stop')">{{ $t("vless.stopService") }}</el-button>
+        <el-button :disabled="!serviceStatus?.running || Boolean(serviceAction)" @click="controlService('restart')">{{ $t("vless.restartService") }}</el-button>
+      </div>
+      <div class="mt-4 flex flex-wrap items-center gap-2 border-t pt-4">
+        <span class="font-medium">{{ $t("vless.upgradeXray") }}</span>
+        <el-select v-model="version" :placeholder="$t('vless.selectVersion')" class="w-48">
+          <el-option v-for="item in versions" :key="item" :label="item" :value="item" />
+        </el-select>
+        <el-button type="primary" :loading="upgrading" :disabled="!version || Boolean(serviceAction)" @click="upgrade">{{ $t("vless.upgrade") }}</el-button>
+      </div>
+    </el-card>
     <el-card shadow="never">
       <el-form v-loading="loading" :model="form" label-position="top">
         <el-form-item :label="$t('vless.enabled')">
@@ -142,8 +162,15 @@
 </template>
 
 <script setup lang="ts">
-import { getVlessConfigApi, updateVlessConfigApi } from "@/api/vless";
-import { VlessConfig } from "@/api/vless/types";
+import {
+  controlXrayServiceApi,
+  getVlessConfigApi,
+  getXrayServiceStatusApi,
+  listXrayReleaseVersionsApi,
+  updateVlessConfigApi,
+  upgradeXrayApi,
+} from "@/api/vless";
+import { VlessConfig, XrayServiceAction, XrayServiceStatus } from "@/api/vless/types";
 import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
@@ -174,6 +201,12 @@ const defaults: VlessConfig = {
 const form = reactive<VlessConfig>({ ...defaults });
 const loading = ref(false);
 const saving = ref(false);
+const serviceStatus = ref<XrayServiceStatus | null>(null);
+const statusLoading = ref(false);
+const serviceAction = ref<XrayServiceAction | null>(null);
+const versions = ref<string[]>([]);
+const version = ref("");
+const upgrading = ref(false);
 const alpnText = computed({
   get: () => form.alpn.join(","),
   set: (value: string) => {
@@ -207,6 +240,56 @@ const load = async () => {
   }
 };
 
+const loadServiceStatus = async () => {
+  statusLoading.value = true;
+  try {
+    const { data } = await getXrayServiceStatusApi();
+    serviceStatus.value = data;
+  } catch (e) {
+    serviceStatus.value = null;
+  } finally {
+    statusLoading.value = false;
+  }
+};
+
+const loadVersions = async () => {
+  try {
+    const { data } = await listXrayReleaseVersionsApi();
+    versions.value = data;
+    if (!version.value) version.value = data[0] || "";
+  } catch (e) {
+    versions.value = [];
+  }
+};
+
+const controlService = async (action: XrayServiceAction) => {
+  if (serviceAction.value) return;
+  serviceAction.value = action;
+  try {
+    await controlXrayServiceApi(action);
+    ElMessage.success(t("vless.serviceActionSuccess"));
+    await loadServiceStatus();
+  } catch (e) {
+    /* request interceptor displays the error */
+  } finally {
+    serviceAction.value = null;
+  }
+};
+
+const upgrade = async () => {
+  if (!version.value || upgrading.value) return;
+  upgrading.value = true;
+  try {
+    await upgradeXrayApi(version.value);
+    ElMessage.success(t("vless.upgradeSuccess"));
+    await loadServiceStatus();
+  } catch (e) {
+    /* request interceptor displays the error */
+  } finally {
+    upgrading.value = false;
+  }
+};
+
 const save = async () => {
   saving.value = true;
   try {
@@ -219,5 +302,11 @@ const save = async () => {
   }
 };
 
-onMounted(load);
+onMounted(() => {
+  void load();
+  void loadServiceStatus();
+  void loadVersions();
+});
+const statusTimer = window.setInterval(() => void loadServiceStatus(), 15000);
+onBeforeUnmount(() => window.clearInterval(statusTimer));
 </script>

@@ -107,13 +107,13 @@ func CronHandleVless() {
 		switch parts[3] {
 		case "downlink":
 			if stat.Value > 0 {
-				if err := dao.UpdateAccountTraffic(*account.Username, stat.Value, 0); err != nil {
+				if err := dao.UpdateAccountNodeTraffic(*account.Username, "vless", stat.Value, 0); err != nil {
 					warnVlessSync("save download traffic", err)
 				}
 			}
 		case "uplink":
 			if stat.Value > 0 {
-				if err := dao.UpdateAccountTraffic(*account.Username, 0, stat.Value); err != nil {
+				if err := dao.UpdateAccountNodeTraffic(*account.Username, "vless", 0, stat.Value); err != nil {
 					warnVlessSync("save upload traffic", err)
 				}
 			}

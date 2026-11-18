@@ -53,7 +53,8 @@
       </el-row>
     </el-card>
 
-    <el-row :gutter="10" class="mt-3">
+    <p class="mb-2 mt-3 text-xs text-gray-500">{{ $t("account.nodeTrafficHint") }}</p>
+    <el-row :gutter="10">
       <el-col :xs="24" :sm="12" :lg="6">
         <el-card shadow="never">
           <template #header>
@@ -79,16 +80,19 @@
           <template #header>
             <div class="flex items-center justify-between">
               <span class="text-[var(--el-text-color-secondary)]">
-                {{ $t("account.download") }}
+                {{ $t("account.hysteria2Traffic") }}
               </span>
               <el-tag type="success"
-                >{{ formatStorageUnit(account.download) }}
+                >{{ formatStorageUnit(hysteria2Total) }}
               </el-tag>
             </div>
           </template>
           <div class="flex items-center justify-between mt-5">
             <div class="text-lg text-right">
-              {{ formatBytes(account.download) }}
+              {{ formatBytes(hysteria2Total) }}
+              <div class="mt-1 text-xs text-[var(--el-text-color-secondary)]">
+                ↓ {{ formatBytes(account.hysteria2Download || 0) }} · ↑ {{ formatBytes(account.hysteria2Upload || 0) }}
+              </div>
             </div>
             <svg-icon icon-class="download" size="2em" />
           </div>
@@ -99,16 +103,19 @@
           <template #header>
             <div class="flex items-center justify-between">
               <span class="text-[var(--el-text-color-secondary)]">
-                {{ $t("account.upload") }}
+                {{ $t("account.vlessTraffic") }}
               </span>
               <el-tag type="success"
-                >{{ formatStorageUnit(account.upload) }}
+                >{{ formatStorageUnit(vlessTotal) }}
               </el-tag>
             </div>
           </template>
           <div class="flex items-center justify-between mt-5">
             <div class="text-lg text-right">
-              {{ formatBytes(account.upload) }}
+              {{ formatBytes(vlessTotal) }}
+              <div class="mt-1 text-xs text-[var(--el-text-color-secondary)]">
+                ↓ {{ formatBytes(account.vlessDownload || 0) }} · ↑ {{ formatBytes(account.vlessUpload || 0) }}
+              </div>
             </div>
             <svg-icon icon-class="upload" size="2em" />
           </div>
@@ -211,6 +218,12 @@ const state = reactive({
 });
 
 const { qrCodeDialog, account, qrCodeSrc } = toRefs(state);
+const hysteria2Total = computed(
+  () => (account.value.hysteria2Download || 0) + (account.value.hysteria2Upload || 0),
+);
+const vlessTotal = computed(
+  () => (account.value.vlessDownload || 0) + (account.value.vlessUpload || 0),
+);
 
 const handleSubscribe = async () => {
   try {

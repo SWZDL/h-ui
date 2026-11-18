@@ -37,3 +37,11 @@ export interface VlessUrlVo {
   url: string;
   qrCode: string;
 }
+
+export interface XrayServiceStatus {
+  state: string;
+  running: boolean;
+  version: string;
+}
+
+export type XrayServiceAction = "start" | "stop" | "restart";

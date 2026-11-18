@@ -410,10 +410,12 @@ function AccountRow({ row, onCommand }: AccountRowProps) {
         </div>
       </TableCell>
       <TableCell className="text-muted-foreground tabular-nums">
-        {formatBytes(row.download)}
+        <div>{formatBytes(row.hysteria2Download + row.hysteria2Upload)}</div>
+        <div className="text-xs">↓ {formatBytes(row.hysteria2Download)} · ↑ {formatBytes(row.hysteria2Upload)}</div>
       </TableCell>
       <TableCell className="text-muted-foreground tabular-nums">
-        {formatBytes(row.upload)}
+        <div>{formatBytes(row.vlessDownload + row.vlessUpload)}</div>
+        <div className="text-xs">↓ {formatBytes(row.vlessDownload)} · ↑ {formatBytes(row.vlessUpload)}</div>
       </TableCell>
       <TableCell>
         <OnlineBadge online={row.online} />
@@ -1122,8 +1124,8 @@ export function AccountsPage() {
     t("accounts.columns.username"),
     t("accounts.columns.role"),
     t("accounts.columns.quota"),
-    t("accounts.columns.download"),
-    t("accounts.columns.upload"),
+    t("accounts.columns.hysteria2Traffic"),
+    t("accounts.columns.vlessTraffic"),
     t("accounts.columns.online"),
     t("accounts.columns.device"),
     t("accounts.columns.deviceNo"),

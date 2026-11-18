@@ -114,23 +114,25 @@
           </template>
         </el-table-column>
         <el-table-column
-          key="download"
-          :label="$t('account.download')"
+          key="hysteria2Traffic"
+          :label="$t('account.hysteria2Traffic')"
           align="center"
-          prop="download"
+          prop="hysteria2Download"
         >
           <template #default="scope">
-            {{ formatBytes(scope.row.download) }}
+            <div>{{ formatBytes(scope.row.hysteria2Download + scope.row.hysteria2Upload) }}</div>
+            <div class="text-xs text-gray-500">↓ {{ formatBytes(scope.row.hysteria2Download) }} · ↑ {{ formatBytes(scope.row.hysteria2Upload) }}</div>
           </template>
         </el-table-column>
         <el-table-column
-          key="upload"
-          :label="$t('account.upload')"
+          key="vlessTraffic"
+          :label="$t('account.vlessTraffic')"
           align="center"
-          prop="upload"
+          prop="vlessDownload"
         >
           <template #default="scope">
-            {{ formatBytes(scope.row.upload) }}
+            <div>{{ formatBytes(scope.row.vlessDownload + scope.row.vlessUpload) }}</div>
+            <div class="text-xs text-gray-500">↓ {{ formatBytes(scope.row.vlessDownload) }} · ↑ {{ formatBytes(scope.row.vlessUpload) }}</div>
           </template>
         </el-table-column>
         <el-table-column

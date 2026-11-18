@@ -22,5 +22,9 @@ func initVlessAdminRouter(vlessApi *gin.RouterGroup) {
 	{
 		vless.GET("/getVlessConfig", controller.GetVlessConfig)
 		vless.POST("/updateVlessConfig", controller.UpdateVlessConfig)
+		vless.GET("/xray/status", controller.VlessXrayServiceStatus)
+		vless.POST("/xray/service", controller.VlessXrayServiceAction)
+		vless.GET("/xray/releases", controller.ListXrayReleaseVersions)
+		vless.POST("/xray/upgrade", controller.UpgradeVlessXray)
 	}
 }

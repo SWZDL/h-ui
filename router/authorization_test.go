@@ -188,6 +188,10 @@ func TestRegularAccountCannotUseAdminEndpoints(t *testing.T) {
 		{http.MethodGet, "/hui/config/getConfig", nil},
 		{http.MethodGet, "/hui/vless/getVlessConfig", nil},
 		{http.MethodPost, "/hui/vless/updateVlessConfig", map[string]any{"enabled": false}},
+		{http.MethodGet, "/hui/vless/xray/status", nil},
+		{http.MethodPost, "/hui/vless/xray/service", map[string]string{"action": "stop"}},
+		{http.MethodGet, "/hui/vless/xray/releases", nil},
+		{http.MethodPost, "/hui/vless/xray/upgrade", map[string]string{"version": "v25.6.8"}},
 		{http.MethodGet, "/hui/log/logSystem", nil},
 	}
 	for _, item := range paths {

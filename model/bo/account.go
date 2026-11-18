@@ -10,22 +10,26 @@ type AccountBo struct {
 }
 
 type AccountExport struct {
-	Id           int64     `json:"id"`
-	Username     string    `json:"username"`
-	Pass         string    `json:"pass"`
-	ConPass      string    `json:"conPass"`
-	VlessUUID    string    `json:"vlessUUID"`
-	Quota        int64     `json:"quota"`
-	Download     int64     `json:"download"`
-	Upload       int64     `json:"upload"`
-	ExpireTime   int64     `json:"expireTime"`
-	DeviceNo     int64     `json:"deviceNo"`
-	KickUtilTime int64     `json:"kickUtilTime"`
-	Role         string    `json:"role"`
-	Deleted      int64     `json:"deleted"`
-	CreateTime   time.Time `json:"createTime"`
-	UpdateTime   time.Time `json:"updateTime"`
-	LoginAt      int64     `json:"loginAt"`
-	ConAt        int64     `json:"conAt"`
-	Remark       string    `json:"remark"`
+	Id                int64     `json:"id"`
+	Username          string    `json:"username"`
+	Pass              string    `json:"pass"`
+	ConPass           string    `json:"conPass"`
+	VlessUUID         string    `json:"vlessUUID"`
+	Quota             int64     `json:"quota"`
+	Download          int64     `json:"download"`
+	Upload            int64     `json:"upload"`
+	Hysteria2Download int64     `json:"hysteria2Download"`
+	Hysteria2Upload   int64     `json:"hysteria2Upload"`
+	VlessDownload     int64     `json:"vlessDownload"`
+	VlessUpload       int64     `json:"vlessUpload"`
+	ExpireTime        int64     `json:"expireTime"`
+	DeviceNo          int64     `json:"deviceNo"`
+	KickUtilTime      int64     `json:"kickUtilTime"`
+	Role              string    `json:"role"`
+	Deleted           int64     `json:"deleted"`
+	CreateTime        time.Time `json:"createTime"`
+	UpdateTime        time.Time `json:"updateTime"`
+	LoginAt           int64     `json:"loginAt"`
+	ConAt             int64     `json:"conAt"`
+	Remark            string    `json:"remark"`
 }

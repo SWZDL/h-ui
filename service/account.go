@@ -90,7 +90,7 @@ func UpdateAccount(account entity.Account) error {
 }
 
 func ResetTraffic(id int64) error {
-	return dao.UpdateAccount([]int64{id}, map[string]interface{}{"download": 0, "upload": 0})
+	return dao.UpdateAccount([]int64{id}, map[string]interface{}{"download": 0, "upload": 0, "hysteria2_download": 0, "hysteria2_upload": 0, "vless_download": 0, "vless_upload": 0})
 }
 
 func ExistAccountUsername(username string, id int64) bool {
@@ -120,24 +120,28 @@ func ListExportAccount() ([]bo.AccountExport, error) {
 	var accountExports []bo.AccountExport
 	for _, item := range accounts {
 		accountExport := bo.AccountExport{
-			Id:           *item.Id,
-			Username:     *item.Username,
-			Pass:         *item.Pass,
-			ConPass:      *item.ConPass,
-			VlessUUID:    *item.VlessUUID,
-			Quota:        *item.Quota,
-			Download:     *item.Download,
-			Upload:       *item.Upload,
-			ExpireTime:   *item.ExpireTime,
-			DeviceNo:     *item.DeviceNo,
-			KickUtilTime: *item.KickUtilTime,
-			Role:         *item.Role,
-			Deleted:      *item.Deleted,
-			CreateTime:   *item.CreateTime,
-			UpdateTime:   *item.UpdateTime,
-			LoginAt:      *item.LoginAt,
-			ConAt:        *item.ConAt,
-			Remark:       *item.Remark,
+			Id:                *item.Id,
+			Username:          *item.Username,
+			Pass:              *item.Pass,
+			ConPass:           *item.ConPass,
+			VlessUUID:         *item.VlessUUID,
+			Quota:             *item.Quota,
+			Download:          *item.Download,
+			Upload:            *item.Upload,
+			Hysteria2Download: valueOrZero(item.Hysteria2Download),
+			Hysteria2Upload:   valueOrZero(item.Hysteria2Upload),
+			VlessDownload:     valueOrZero(item.VlessDownload),
+			VlessUpload:       valueOrZero(item.VlessUpload),
+			ExpireTime:        *item.ExpireTime,
+			DeviceNo:          *item.DeviceNo,
+			KickUtilTime:      *item.KickUtilTime,
+			Role:              *item.Role,
+			Deleted:           *item.Deleted,
+			CreateTime:        *item.CreateTime,
+			UpdateTime:        *item.UpdateTime,
+			LoginAt:           *item.LoginAt,
+			ConAt:             *item.ConAt,
+			Remark:            *item.Remark,
 		}
 		accountExports = append(accountExports, accountExport)
 	}

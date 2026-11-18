@@ -40,12 +40,36 @@ export interface VlessUrlVo {
   qrCode: string;
 }
 
+export interface XrayServiceStatus {
+  state: string;
+  running: boolean;
+  version: string;
+}
+
+export type XrayServiceAction = "start" | "stop" | "restart";
+
 export function getVlessConfigApi() {
   return get<VlessConfig>("/vless/getVlessConfig");
 }
 
 export function updateVlessConfigApi(data: VlessConfig) {
   return post<null>("/vless/updateVlessConfig", data);
+}
+
+export function getXrayServiceStatusApi() {
+  return get<XrayServiceStatus>("/vless/xray/status");
+}
+
+export function controlXrayServiceApi(action: XrayServiceAction) {
+  return post<null>("/vless/xray/service", { action });
+}
+
+export function listXrayReleaseVersionsApi() {
+  return get<string[]>("/vless/xray/releases");
+}
+
+export function upgradeXrayApi(version: string) {
+  return post<null>("/vless/xray/upgrade", { version });
 }
 
 export function vlessSubscribeUrlApi(data: VlessSubscribeUrlDto) {
