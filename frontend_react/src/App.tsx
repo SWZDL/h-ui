@@ -15,6 +15,9 @@ const AccountsPage = lazy(() =>
 const HysteriaPage = lazy(() =>
   import("@/pages/hysteria").then((m) => ({ default: m.HysteriaPage }))
 );
+const VlessPage = lazy(() =>
+  import("@/pages/vless").then((m) => ({ default: m.VlessPage }))
+);
 const TelegramPage = lazy(() =>
   import("@/pages/telegram").then((m) => ({ default: m.TelegramPage }))
 );
@@ -67,6 +70,7 @@ export default function App() {
           <Route path="info/account" element={<DashboardPage />} />
           <Route path="account/list" element={admin(<AccountsPage />)} />
           <Route path="hysteria/list" element={admin(<HysteriaPage />)} />
+          <Route path="vless/list" element={admin(<VlessPage />)} />
           <Route path="telegram/list" element={admin(<TelegramPage />)} />
           <Route path="config/list" element={admin(<SystemConfigPage />)} />
           {/* Monitoring lives on the overview page now; keep old bookmarks working. */}

@@ -6,7 +6,7 @@
 
 [English](README.md) / 简体中文
 
-仅仅是 Hysteria2 的面板
+Hysteria2 管理面板，并提供 VLESS 客户端配置与订阅链接管理
 
 <p>
 <a href="https://www.gnu.org/licenses/gpl-3.0.html"><img src="https://img.shields.io/github/license/SWZDL/h-ui" alt="License: GPL-3.0"></a>
@@ -26,8 +26,11 @@
 - 概览页展示系统状态（主机负载与 Hysteria2 服务状态），管理员和用户均可见
 - 限制用户流量、用户在线状态、强制用户下线、在线用户数、重设用户流量
 - 限制用户同时在线设备数、在线设备数量
-- 用户订阅链接、节点URL、导入和导出用户
-- 管理 Hysteria2 配置和 Hysteria2 版本、端口跳跃
+- 用户 Hysteria2/VLESS 订阅链接、节点 URL 和二维码，支持导入和导出用户
+- 管理 Hysteria2 配置和版本、端口跳跃
+- 管理本机 Xray VLESS 入站；h-ui 通过 Xray 本地 API 为账户同步 UUID、统计流量，并执行配额、到期、强制下线和在线设备数限制
+- 为账户生成 VLESS URI、Base64 订阅和 Clash Meta YAML。需在同一台主机安装 Xray；启用 VLESS 管理后，h-ui 可自动配置本地 API 并重启指定的 systemd 服务
+- 非 h-ui 创建的现有 Xray 用户不会被修改，也不纳入 h-ui 的配额和设备数限制
 - 更改 Web 端口、修改 Hysteria2 流量倍数
 - Telegram 通知
 - 查看、导入和导出系统日志和 Hysteria2 日志

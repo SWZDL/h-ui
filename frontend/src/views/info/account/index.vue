@@ -36,6 +36,18 @@
             <el-button type="primary" :icon="Share" @click="handleUrlQrCode">
               {{ $t("common.nodeQrCode") }}
             </el-button>
+            <el-button type="primary" :icon="Share" @click="handleVlessSubscribe">
+              {{ $t("common.vlessSubscribe") }}
+            </el-button>
+            <el-button type="primary" :icon="Share" @click="handleVlessSubscribeQrCode">
+              {{ $t("common.vlessSubscribeQrCode") }}
+            </el-button>
+            <el-button type="primary" :icon="Share" @click="handleVlessNodeUrl">
+              {{ $t("common.vlessNodeUrl") }}
+            </el-button>
+            <el-button type="primary" :icon="Share" @click="handleVlessNodeQrCode">
+              {{ $t("common.vlessNodeQrCode") }}
+            </el-button>
           </div>
         </el-col>
       </el-row>
@@ -165,6 +177,7 @@ import {
   Hysteria2UrlDto,
 } from "@/api/hysteria2/types";
 import { hysteria2SubscribeUrlApi, hysteria2UrlApi } from "@/api/hysteria2";
+import { vlessSubscribeUrlApi, vlessUrlApi } from "@/api/vless";
 import copy from "copy-to-clipboard";
 
 const { t } = useI18n();
@@ -254,6 +267,52 @@ const handleUrlQrCode = async () => {
     state.qrCodeDialog.visible = true;
   } catch (e) {
     /* empty */
+  }
+};
+
+const getVlessSubscribeDto = () => ({
+  accountId: accountStore.id,
+  protocol: window.location.protocol,
+  host: window.location.host,
+});
+
+const handleVlessSubscribe = async () => {
+  try {
+    const { data } = await vlessSubscribeUrlApi(getVlessSubscribeDto());
+    copy(data.url);
+    ElMessage.success(t("common.copySuccess"));
+  } catch (e) {
+    /* request layer displays errors */
+  }
+};
+
+const handleVlessSubscribeQrCode = async () => {
+  try {
+    const { data } = await vlessSubscribeUrlApi(getVlessSubscribeDto());
+    state.qrCodeSrc = "data:image/png;base64," + data.qrCode;
+    state.qrCodeDialog.visible = true;
+  } catch (e) {
+    /* request layer displays errors */
+  }
+};
+
+const handleVlessNodeUrl = async () => {
+  try {
+    const { data } = await vlessUrlApi({ accountId: accountStore.id });
+    copy(data.url);
+    ElMessage.success(t("common.copySuccess"));
+  } catch (e) {
+    /* request layer displays errors */
+  }
+};
+
+const handleVlessNodeQrCode = async () => {
+  try {
+    const { data } = await vlessUrlApi({ accountId: accountStore.id });
+    state.qrCodeSrc = "data:image/png;base64," + data.qrCode;
+    state.qrCodeDialog.visible = true;
+  } catch (e) {
+    /* request layer displays errors */
   }
 };
 

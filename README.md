@@ -6,7 +6,7 @@
 
 English / [简体中文](README_ZH.md)
 
-Just the panel for Hysteria2
+A Hysteria2 management panel with VLESS client profile and subscription management
 
 <p>
 <a href="https://www.gnu.org/licenses/gpl-3.0.html"><img src="https://img.shields.io/github/license/SWZDL/h-ui" alt="License: GPL-3.0"></a>
@@ -26,8 +26,11 @@ Just the panel for Hysteria2
 - System status (host usage and Hysteria2 health) on the overview page, visible to admins and users alike
 - Limit user traffic, user online status, force users to log off, number of online users, reset user traffic
 - Limit the number of users' online devices at the same time, the number of online devices
-- User subscription link, node URL, import and export users
-- Managing Hysteria2 configurations and Hysteria2 versions, port hopping
+- Hysteria2/VLESS user subscription links, node URLs and QR codes; import and export users
+- Manage Hysteria2 configuration and versions, port hopping
+- Configure a local Xray VLESS inbound; h-ui provisions account UUIDs, tracks Xray traffic, and enforces account quota, expiry, kick, and online-device limits through Xray's local API
+- Generate VLESS URIs, Base64 subscriptions and Clash Meta YAML. Xray must be installed on the same host; h-ui can enable its local API and restart the configured systemd service when VLESS management is enabled
+- Existing Xray users not provisioned by h-ui are left untouched and remain outside h-ui quota/device enforcement
 - Change the Web port, modify the Hysteria2 traffic multiplier
 - Telegram notification
 - View, import, and export system logs and Hysteria2 logs

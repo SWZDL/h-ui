@@ -242,6 +242,15 @@
             <el-button type="primary" link @click="handleQrCode(scope.row)">
               {{ $t("common.nodeQrCode") }}
             </el-button>
+            <el-button type="primary" link @click="handleVlessSubscribe(scope.row)">
+              {{ $t("common.vlessSubscribe") }}
+            </el-button>
+            <el-button type="primary" link @click="handleVlessNodeUrl(scope.row)">
+              {{ $t("common.vlessNodeUrl") }}
+            </el-button>
+            <el-button type="primary" link @click="handleVlessQrCode(scope.row)">
+              {{ $t("common.vlessNodeQrCode") }}
+            </el-button>
             <el-popconfirm
               title="Are you sure to reset traffic?"
               @confirm="resetTraffic(scope.row)"
@@ -478,6 +487,7 @@ import {
   hysteria2SubscribeUrlApi,
   hysteria2UrlApi,
 } from "@/api/hysteria2";
+import { vlessSubscribeUrlApi, vlessUrlApi } from "@/api/vless";
 import {
   UploadFile,
   UploadRawFile,
@@ -942,6 +952,40 @@ const handleQrCode = async (row: { [key: string]: any }) => {
     state.qrCodeDialog.visible = true;
   } catch (e) {
     /* empty */
+  }
+};
+
+const handleVlessSubscribe = async (row: { [key: string]: any }) => {
+  try {
+    const { data } = await vlessSubscribeUrlApi({
+      accountId: row.id,
+      protocol: window.location.protocol,
+      host: window.location.host,
+    });
+    copy(data.url);
+    ElMessage.success(t("common.copySuccess"));
+  } catch (e) {
+    /* request layer displays errors */
+  }
+};
+
+const handleVlessNodeUrl = async (row: { [key: string]: any }) => {
+  try {
+    const { data } = await vlessUrlApi({ accountId: row.id });
+    copy(data.url);
+    ElMessage.success(t("common.copySuccess"));
+  } catch (e) {
+    /* request layer displays errors */
+  }
+};
+
+const handleVlessQrCode = async (row: { [key: string]: any }) => {
+  try {
+    const { data } = await vlessUrlApi({ accountId: row.id });
+    state.qrCodeSrc = "data:image/png;base64," + data.qrCode;
+    state.qrCodeDialog.visible = true;
+  } catch (e) {
+    /* request layer displays errors */
   }
 };
 

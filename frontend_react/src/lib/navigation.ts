@@ -7,6 +7,7 @@ import {
   TerminalSquareIcon,
   UserRoundIcon,
   UsersRoundIcon,
+  NetworkIcon,
   type LucideIcon,
 } from "lucide-react";
 
@@ -47,6 +48,7 @@ export const navGroups: NavGroup[] = [
     entries: [
       { to: "/account/list", labelKey: "nav.accounts", icon: UsersRoundIcon },
       { to: "/hysteria/list", labelKey: "nav.hysteria", icon: RocketIcon },
+      { to: "/vless/list", labelKey: "nav.vless", icon: NetworkIcon },
       { to: "/telegram/list", labelKey: "nav.telegram", icon: SendIcon },
     ],
   },

@@ -130,6 +130,25 @@ export const asyncRoutes: any[] = [
     ],
   },
   {
+    path: "/vless",
+    component: "Layout",
+    redirect: "/list",
+    name: "Vless",
+    meta: { title: "vless", icon: "hysteria", roles: ["admin"] },
+    children: [
+      {
+        path: "list",
+        component: "vless/list/index",
+        name: "VlessList",
+        meta: {
+          title: "vlessList",
+          icon: "hysteria",
+          roles: ["admin"],
+        },
+      },
+    ],
+  },
+  {
     path: "/config",
     component: "Layout",
     redirect: "/list",

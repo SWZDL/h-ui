@@ -16,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { getAccountApi, verifyDefaultPassApi } from "@/api/account";
 import { hysteria2SubscribeUrlApi, hysteria2UrlApi } from "@/api/hysteria2";
+import { vlessSubscribeUrlApi, vlessUrlApi } from "@/api/vless";
 import { QrCodeDialog } from "@/components/common/qr-code-dialog";
 import { StatCard, TinyBadge } from "@/components/common/stat-card";
 import { SystemStatus } from "@/components/dashboard/system-status";
@@ -141,6 +142,62 @@ export function DashboardPage() {
     }
   };
 
+  const handleVlessSubscribe = async () => {
+    if (!user) return;
+    try {
+      const data = await vlessSubscribeUrlApi({
+        accountId: user.id,
+        protocol: window.location.protocol,
+        host: window.location.host,
+      });
+      await copy(data.url);
+    } catch {
+      /* handled globally */
+    }
+  };
+
+  const handleVlessSubscribeQr = async () => {
+    if (!user) return;
+    try {
+      const data = await vlessSubscribeUrlApi({
+        accountId: user.id,
+        protocol: window.location.protocol,
+        host: window.location.host,
+      });
+      setQr({
+        open: true,
+        title: t("dashboard.qrSubscribeTitle"),
+        src: `data:image/png;base64,${data.qrCode}`,
+      });
+    } catch {
+      /* handled globally */
+    }
+  };
+
+  const handleVlessNodeUrl = async () => {
+    if (!user) return;
+    try {
+      const data = await vlessUrlApi({ accountId: user.id });
+      await copy(data.url);
+    } catch {
+      /* handled globally */
+    }
+  };
+
+  const handleVlessNodeQr = async () => {
+    if (!user) return;
+    try {
+      const data = await vlessUrlApi({ accountId: user.id });
+      setQr({
+        open: true,
+        title: t("dashboard.qrNodeTitle"),
+        src: `data:image/png;base64,${data.qrCode}`,
+      });
+    } catch {
+      /* handled globally */
+    }
+  };
+
   const handleNodeUrl = async () => {
     if (!user) return;
     try {
@@ -257,6 +314,42 @@ export function DashboardPage() {
               >
                 <QrCodeIcon data-icon="inline-start" />
                 {t("common.nodeQrCode")}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-background/25 bg-transparent text-background hover:bg-background/10 hover:text-background dark:border-border dark:text-foreground dark:hover:bg-muted dark:hover:text-foreground"
+                onClick={() => void handleVlessSubscribe()}
+              >
+                <Share2Icon data-icon="inline-start" />
+                {t("common.vlessSubscribe")}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-background/25 bg-transparent text-background hover:bg-background/10 hover:text-background dark:border-border dark:text-foreground dark:hover:bg-muted dark:hover:text-foreground"
+                onClick={() => void handleVlessSubscribeQr()}
+              >
+                <QrCodeIcon data-icon="inline-start" />
+                {t("common.vlessSubscribeQrCode")}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-background/25 bg-transparent text-background hover:bg-background/10 hover:text-background dark:border-border dark:text-foreground dark:hover:bg-muted dark:hover:text-foreground"
+                onClick={() => void handleVlessNodeUrl()}
+              >
+                <LinkIcon data-icon="inline-start" />
+                {t("common.vlessNodeUrl")}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-background/25 bg-transparent text-background hover:bg-background/10 hover:text-background dark:border-border dark:text-foreground dark:hover:bg-muted dark:hover:text-foreground"
+                onClick={() => void handleVlessNodeQr()}
+              >
+                <QrCodeIcon data-icon="inline-start" />
+                {t("common.vlessNodeQrCode")}
               </Button>
             </div>
           </div>

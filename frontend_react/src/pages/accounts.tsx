@@ -42,6 +42,7 @@ import {
   hysteria2SubscribeUrlApi,
   hysteria2UrlApi,
 } from "@/api/hysteria2";
+import { vlessSubscribeUrlApi, vlessUrlApi } from "@/api/vless";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
 import { DataPagination } from "@/components/common/data-pagination";
 import { QrCodeDialog } from "@/components/common/qr-code-dialog";
@@ -136,6 +137,9 @@ type RowCommand =
   | "subscribe"
   | "nodeUrl"
   | "nodeQr"
+  | "vlessSubscribe"
+  | "vlessNodeUrl"
+  | "vlessNodeQr"
   | "resetTraffic"
   | "edit"
   | "delete"
@@ -295,6 +299,18 @@ function AccountActions({ row, onCommand }: AccountActionsProps) {
           <DropdownMenuItem onSelect={() => onCommand("nodeQr", row)}>
             <QrCodeIcon />
             {t("common.nodeQrCode")}
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => onCommand("vlessSubscribe", row)}>
+            <Share2Icon />
+            {t("common.vlessSubscribe")}
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => onCommand("vlessNodeUrl", row)}>
+            <LinkIcon />
+            {t("common.vlessNodeUrl")}
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => onCommand("vlessNodeQr", row)}>
+            <QrCodeIcon />
+            {t("common.vlessNodeQrCode")}
           </DropdownMenuItem>
         </DropdownMenuGroup>
 
@@ -937,6 +953,37 @@ export function AccountsPage() {
     }
   };
 
+  const copyVlessSubscribeUrl = async (row: AccountVo) => {
+    try {
+      const data = await vlessSubscribeUrlApi({
+        accountId: row.id,
+        protocol: window.location.protocol,
+        host: window.location.host,
+      });
+      await copyWithToast(data.url);
+    } catch {
+      /* API layer reports the error. */
+    }
+  };
+
+  const copyVlessNodeUrl = async (row: AccountVo) => {
+    try {
+      const data = await vlessUrlApi({ accountId: row.id });
+      await copyWithToast(data.url);
+    } catch {
+      /* API layer reports the error. */
+    }
+  };
+
+  const showVlessNodeQr = async (row: AccountVo) => {
+    try {
+      const data = await vlessUrlApi({ accountId: row.id });
+      setQr({ open: true, src: `data:image/png;base64,${data.qrCode}` });
+    } catch {
+      /* API layer reports the error. */
+    }
+  };
+
   const showNodeQr = async (row: AccountVo) => {
     try {
       const data = await hysteria2UrlApi({
@@ -965,6 +1012,15 @@ export function AccountsPage() {
         break;
       case "nodeQr":
         void showNodeQr(row);
+        break;
+      case "vlessSubscribe":
+        void copyVlessSubscribeUrl(row);
+        break;
+      case "vlessNodeUrl":
+        void copyVlessNodeUrl(row);
+        break;
+      case "vlessNodeQr":
+        void showVlessNodeQr(row);
         break;
       case "resetTraffic":
         setConfirm({ kind: "resetTraffic", row });
