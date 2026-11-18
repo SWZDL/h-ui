@@ -317,10 +317,14 @@ export interface LogHysteria2Vo {
 /* ----------------------------------------------------------------- monitor */
 
 export interface SystemMonitorVo {
+  hostname: string;
+  ip: string;
   huiVersion: string;
   cpuPercent: number;
   diskPercent: number;
   memPercent: number;
+  hysteria2Running: boolean;
+  vlessRunning: boolean;
 }
 
 export interface Hysteria2MonitorVo {

@@ -30,6 +30,8 @@ Hysteria2 管理面板，并提供 VLESS 客户端配置与订阅链接管理
 - 管理 Hysteria2 配置和版本、端口跳跃
 - 管理本机 Xray VLESS 入站；h-ui 通过 Xray 本地 API 为账户同步 UUID、统计流量，并执行配额、到期、强制下线和在线设备数限制
 - 为账户生成 VLESS URI、Base64 订阅、Clash Meta YAML 和 Loon 节点列表。需在同一台主机安装 Xray；启用 VLESS 管理后，h-ui 可自动配置本地 API 并重启指定的 systemd 服务
+- 顶栏展示主机名称与 IP；只对正在运行的代理服务提供订阅和节点链接
+- 每个 Xray 客户端都必须归属账户：用户直接扫描节点二维码（不走订阅）的流量同样计入配额，没有 h-ui email 的客户端会被清理，因为其流量无法归属
 - 非 h-ui 创建的现有 Xray 用户不会被修改，也不纳入 h-ui 的配额和设备数限制
 - 更改 Web 端口、修改 Hysteria2 流量倍数
 - Telegram 通知

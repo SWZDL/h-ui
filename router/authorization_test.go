@@ -212,8 +212,10 @@ func TestMonitoringIsVisibleToEveryAccount(t *testing.T) {
 	if result.Code != 20000 {
 		t.Fatalf("regular account monitorSystem: code=%d message=%s", result.Code, result.Message)
 	}
-	if !strings.Contains(string(result.Data), `"huiVersion"`) {
-		t.Fatalf("monitorSystem payload missing host data: %s", result.Data)
+	for _, field := range []string{`"huiVersion"`, `"hostname"`, `"ip"`, `"hysteria2Running"`, `"vlessRunning"`} {
+		if !strings.Contains(string(result.Data), field) {
+			t.Fatalf("monitorSystem payload missing %s: %s", field, result.Data)
+		}
 	}
 
 	adminToken := login(t, engine, "sysadmin", "sysadmin")

@@ -1,7 +1,7 @@
 import { ChevronDownIcon, ChevronsUpDownIcon, LogOutIcon } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Logo, LogoMark } from "@/components/logo";
+import { LogoMark } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
@@ -38,6 +38,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/auth";
+import { useHostInfo } from "@/hooks/use-host-info";
 import { useI18n } from "@/i18n";
 import { navGroupsFor } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
@@ -48,7 +49,11 @@ export function AppSidebar() {
   const { t } = useI18n();
   const { user, isAdmin, logout } = useAuth();
   const { state, isMobile } = useSidebar();
+  const host = useHostInfo();
   const [logoutOpen, setLogoutOpen] = useState(false);
+  const hostName = host?.hostname?.trim() || "";
+  const hostIP = host?.ip?.trim() || "";
+  const hostLabel = hostName || hostIP;
 
   const collapsed = state === "collapsed";
   const initials = (user?.username ?? "H").slice(0, 2).toUpperCase();
@@ -65,9 +70,23 @@ export function AppSidebar() {
       <SidebarHeader className="h-14 justify-center px-2">
         <Link
           to="/info/account"
+          title={hostLabel ? `${hostName || hostIP}${hostIP && hostName ? ` · ${hostIP}` : ""}` : undefined}
           className="flex items-center gap-2.5 overflow-hidden px-1"
         >
-          {collapsed && !isMobile ? <LogoMark /> : <Logo />}
+          <LogoMark className="size-7" />
+          <div
+            className={cn(
+              "min-w-0 leading-tight",
+              collapsed && !isMobile && "hidden"
+            )}
+          >
+            <div className="truncate text-sm font-semibold tracking-tight">
+              {hostLabel || "-"}
+            </div>
+            <div className="truncate font-mono text-[11px] text-muted-foreground">
+              {hostIP || "-"}
+            </div>
+          </div>
         </Link>
       </SidebarHeader>
 

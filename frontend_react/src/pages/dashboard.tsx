@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/auth";
+import { useHostInfo } from "@/hooks/use-host-info";
 import { useI18n } from "@/i18n";
 import { copyText } from "@/lib/io";
 import {
@@ -60,6 +61,13 @@ export function DashboardPage() {
   const { t } = useI18n();
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const host = useHostInfo();
+  // Only a running service can hand out working links; keep every action
+  // visible until the first monitoring reply arrives.
+  const services = {
+    hysteria2: host ? host.hysteria2Running : true,
+    vless: host ? host.vlessRunning : true,
+  };
 
   const [account, setAccount] = useState<AccountVo | null>(null);
   const [qr, setQr] = useState<QrState>(EMPTY_QR);
@@ -279,6 +287,8 @@ export function DashboardPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
+              {services.hysteria2 && (
+                <>
               <Button
                 size="sm"
                 className="bg-background text-foreground hover:bg-background/85 dark:bg-primary dark:text-primary-foreground dark:hover:bg-primary/85"
@@ -314,6 +324,10 @@ export function DashboardPage() {
                 <QrCodeIcon data-icon="inline-start" />
                 {t("common.nodeQrCode")}
               </Button>
+                </>
+              )}
+              {services.vless && (
+                <>
               <Button
                 size="sm"
                 variant="outline"
@@ -350,6 +364,8 @@ export function DashboardPage() {
                 <QrCodeIcon data-icon="inline-start" />
                 {t("common.vlessNodeQrCode")}
               </Button>
+                </>
+              )}
             </div>
           </div>
 

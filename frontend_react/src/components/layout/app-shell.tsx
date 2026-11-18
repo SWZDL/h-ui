@@ -20,6 +20,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/auth";
+import { useHostInfo } from "@/hooks/use-host-info";
 import { useI18n } from "@/i18n";
 import { matchNav, navGroupsFor } from "@/lib/navigation";
 
@@ -27,6 +28,10 @@ export function AppShell() {
   const { pathname } = useLocation();
   const { t } = useI18n();
   const { isAdmin } = useAuth();
+  const host = useHostInfo();
+  const hostName = host?.hostname?.trim() || "";
+  const hostIP = host?.ip?.trim() || "";
+  const hostLabel = hostName || hostIP || "h-ui";
   const match = matchNav(pathname, navGroupsFor(isAdmin));
   const pageLabel = match ? t(match.labelKey) : "H UI";
 
@@ -41,9 +46,21 @@ export function AppShell() {
       <SidebarInset className="min-w-0">
         <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/65 md:px-6">
           <SidebarTrigger className="-ml-1 text-muted-foreground" />
-          <Link to="/info/account" className="flex items-center gap-2 sm:hidden">
+          <Link
+            to="/info/account"
+            className="flex min-w-0 items-center gap-2 sm:hidden"
+          >
             <LogoMark className="size-6" />
-            <span className="text-sm font-semibold tracking-tight">H UI</span>
+            <span className="min-w-0 leading-tight">
+              <span className="block max-w-40 truncate text-xs font-semibold">
+                {hostLabel}
+              </span>
+              {hostIP && hostName ? (
+                <span className="block max-w-40 truncate font-mono text-[10px] text-muted-foreground">
+                  {hostIP}
+                </span>
+              ) : null}
+            </span>
           </Link>
           <Separator
             orientation="vertical"
@@ -53,7 +70,7 @@ export function AppShell() {
             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <Link to="/info/account">H UI</Link>
+                  <Link to="/info/account">{hostName || "h-ui"}</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
               {match && (

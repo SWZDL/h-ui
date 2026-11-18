@@ -121,6 +121,7 @@ import {
 } from "@/lib/format";
 import { copyText, downloadResponse, validateFile } from "@/lib/io";
 import { cn } from "@/lib/utils";
+import { useHostInfo } from "@/hooks/use-host-info";
 import type { AccountPageDto, AccountVo } from "@/types/api";
 
 const CREDENTIAL_PATTERN = /^[a-zA-Z0-9!@#$%^&*()_+-=]{6,32}$/;
@@ -267,12 +268,20 @@ function AccountStateBadge({ deleted }: { deleted: number }) {
 
 interface AccountActionsProps {
   row: AccountVo;
+  services: RunningServices;
   onCommand: (command: RowCommand, row: AccountVo) => void;
 }
 
-function AccountActions({ row, onCommand }: AccountActionsProps) {
+/** Only services that are actually running can be used, so they own the links. */
+interface RunningServices {
+  hysteria2: boolean;
+  vless: boolean;
+}
+
+function AccountActions({ row, services, onCommand }: AccountActionsProps) {
   const { t } = useI18n();
   const kicked = row.kickUtilTime > Date.now();
+  const shareable = services.hysteria2 || services.vless;
 
   return (
     <DropdownMenu>
@@ -287,34 +296,46 @@ function AccountActions({ row, onCommand }: AccountActionsProps) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
-        <DropdownMenuGroup>
-          <DropdownMenuItem onSelect={() => onCommand("subscribe", row)}>
-            <Share2Icon />
-            {t("common.subscribe")}
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => onCommand("nodeUrl", row)}>
-            <LinkIcon />
-            {t("common.nodeUrl")}
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => onCommand("nodeQr", row)}>
-            <QrCodeIcon />
-            {t("common.nodeQrCode")}
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => onCommand("vlessSubscribe", row)}>
-            <Share2Icon />
-            {t("common.vlessSubscribe")}
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => onCommand("vlessNodeUrl", row)}>
-            <LinkIcon />
-            {t("common.vlessNodeUrl")}
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => onCommand("vlessNodeQr", row)}>
-            <QrCodeIcon />
-            {t("common.vlessNodeQrCode")}
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
+        {shareable && (
+          <DropdownMenuGroup>
+            {services.hysteria2 && (
+              <>
+                <DropdownMenuItem onSelect={() => onCommand("subscribe", row)}>
+                  <Share2Icon />
+                  {t("common.subscribe")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => onCommand("nodeUrl", row)}>
+                  <LinkIcon />
+                  {t("common.nodeUrl")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => onCommand("nodeQr", row)}>
+                  <QrCodeIcon />
+                  {t("common.nodeQrCode")}
+                </DropdownMenuItem>
+              </>
+            )}
+            {services.vless && (
+              <>
+                <DropdownMenuItem
+                  onSelect={() => onCommand("vlessSubscribe", row)}
+                >
+                  <Share2Icon />
+                  {t("common.vlessSubscribe")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => onCommand("vlessNodeUrl", row)}>
+                  <LinkIcon />
+                  {t("common.vlessNodeUrl")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => onCommand("vlessNodeQr", row)}>
+                  <QrCodeIcon />
+                  {t("common.vlessNodeQrCode")}
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuGroup>
+        )}
 
-        <DropdownMenuSeparator />
+        {shareable && <DropdownMenuSeparator />}
 
         <DropdownMenuGroup>
           <DropdownMenuItem onSelect={() => onCommand("resetTraffic", row)}>
@@ -355,10 +376,11 @@ function AccountActions({ row, onCommand }: AccountActionsProps) {
 
 interface AccountRowProps {
   row: AccountVo;
+  services: RunningServices;
   onCommand: (command: RowCommand, row: AccountVo) => void;
 }
 
-function AccountRow({ row, onCommand }: AccountRowProps) {
+function AccountRow({ row, services, onCommand }: AccountRowProps) {
   const { t } = useI18n();
 
   /* Quota `-1` is unlimited; never expose the legacy "Unlimited" literal. */
@@ -439,7 +461,7 @@ function AccountRow({ row, onCommand }: AccountRowProps) {
         <AccountStateBadge deleted={row.deleted} />
       </TableCell>
       <TableCell className="sticky right-0 z-10 border-l bg-card text-right shadow-[-10px_0_14px_-14px_rgba(0,0,0,0.35)]">
-        <AccountActions row={row} onCommand={onCommand} />
+        <AccountActions row={row} services={services} onCommand={onCommand} />
       </TableCell>
     </TableRow>
   );
@@ -815,6 +837,13 @@ function AccountFormBody({
 /* -------------------------------------------------------------------- page */
 
 export function AccountsPage() {
+  const host = useHostInfo();
+  // While the first monitoring reply is in flight keep every action visible:
+  // hiding links because a request failed would look like a broken panel.
+  const services: RunningServices = {
+    hysteria2: host ? host.hysteria2Running : true,
+    vless: host ? host.vlessRunning : true,
+  };
   const { t } = useI18n();
   const [searchParams] = useSearchParams();
 
@@ -1370,6 +1399,7 @@ export function AccountsPage() {
                     <AccountRow
                       key={row.id}
                       row={row}
+                      services={services}
                       onCommand={handleRowCommand}
                     />
                   ))

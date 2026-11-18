@@ -30,6 +30,8 @@ A Hysteria2 management panel with VLESS client profile and subscription manageme
 - Manage Hysteria2 configuration and versions, port hopping
 - Configure a local Xray VLESS inbound; h-ui provisions account UUIDs, tracks Xray traffic, and enforces account quota, expiry, kick, and online-device limits through Xray's local API
 - Generate VLESS URIs, Base64 subscriptions, Clash Meta YAML and Loon node lists. Xray must be installed on the same host; h-ui can enable its local API and restart the configured systemd service when VLESS management is enabled
+- Label the header with the host name and IP, and only offer subscription or node links for proxy services that are actually running
+- Bill every Xray client exactly once: a node configured by hand from the QR code is charged like a subscription, and clients without an h-ui email are dropped because their traffic can never be attributed
 - Existing Xray users not provisioned by h-ui are left untouched and remain outside h-ui quota/device enforcement
 - Change the Web port, modify the Hysteria2 traffic multiplier
 - Telegram notification
